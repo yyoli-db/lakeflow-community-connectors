@@ -86,4 +86,3 @@ class LakeflowConnect():
 
             yield json.dumps(record)
 
-
