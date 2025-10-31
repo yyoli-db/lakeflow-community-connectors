@@ -22,30 +22,41 @@ class LakeflowConnect():
         """
         return self.tables
 
-    def get_table_details(self, table: str) -> Tuple[StructType, Dict[str, str]]:
+    def get_table_schema(self, table_name: str) -> StructType:
         """
-        Returns the schema and metadata for a given table using StructType.
+        Fetch the schema of a table.
         """
-        if table == "my_table":
+        if table_name == "my_table":
             schema = StructType(
                 [
                     StructField("id", IntegerType(), False),
                     StructField("name", StringType(), True),
                 ]
             )
-            metadata = {"primary_key": "id", "ingestion_types": "append"}
-        elif table == "your_table":
+        elif table_name == "your_table":
             schema = StructType(
                 [
                     StructField("key", StringType(), False),
                     StructField("value", StringType(), True),
                 ]
             )
+        else:
+            raise ValueError(f"Unknown table: {table_name}")
+
+        return schema
+
+    def read_table_metadata(self, table_name: str) -> Dict[str, str]:
+        """
+        Fetch the metadata of a table.
+        """
+        if table_name == "my_table":
+            metadata = {"primary_key": "id", "ingestion_types": "append"}
+        elif table_name == "your_table":
             metadata = {"primary_key": "key", "ingestion_types": "append"}
         else:
-            raise ValueError(f"Unknown table: {table}")
+            raise ValueError(f"Unknown table: {table_name}")
 
-        return schema, metadata
+        return metadata
 
     def read_table(self, table_name: str, start_offset: dict) -> (Iterator[dict], dict):
         """

@@ -1,13 +1,6 @@
 import dlt
 from pyspark.sql.functions import col, expr
 
-# Get authentication parameters
-# This is using the secret service
-# TODO: support a generic UC connection
-secret_names = [secret.key for secret in dbutils.secrets.list(scope=connection_name)]
-secret_options = {secret_name: str(dbutils.secrets.get(scope=connection_name, key=secret_name)) for secret_name in secret_names}
-lakeflow_connect = LakeflowConnect(secret_options)
-
 
 def _create_cdc_table(table, primary_key, cursor_field, view_name):
     """Create CDC table using streaming and apply_changes"""
@@ -15,7 +8,7 @@ def _create_cdc_table(table, primary_key, cursor_field, view_name):
     def v():
         return (
             spark.readStream.format("lakeflow_connect")
-                .options(**secret_options)
+                .option("databricks.connection", connection_name)
                 .option("tableName", table)
                 .load()
         )
@@ -35,7 +28,7 @@ def _create_snapshot_table(table, primary_key, view_name):
     def snapshot_view():
         return (
             spark.read.format("lakeflow_connect")
-                .options(**secret_options)
+                .option("databricks.connection", connection_name)
                 .option("tableName", table)
                 .load()
         )
@@ -53,19 +46,37 @@ def _create_append_table(table, view_name):
     def append_table():
         return (
             spark.readStream.format("lakeflow_connect")
-                .options(**secret_options)
+                .option("databricks.connection", connection_name)
                 .option("tableName", table)
                 .load()
         )
 
 
+def _get_table_metadata() -> dict:
+    df = (
+        spark.read.format("lakeflow_connect")
+        .option("databricks.connection", connection_name)
+        .option("tableName", "_lakeflow_metadata")
+        .load()
+    )
+    metadata = {}
+    for row in df.collect():
+        metadata[row["tableName"]] = {
+            "primaryKey": row["primaryKey"] or [],
+            "cursorField": row["cursorField"] or [],
+            "ingestionType": row["ingestionType"] or "cdc"
+        }
+    return metadata
+
+
+
 # Function to ingest a list of objects
 def ingest(allow_list: list[str]):
+    metadata = _get_table_metadata()
     def _create_table(table):
-        metadata = lakeflow_connect.get_table_details(table)[1]
-        primary_key = metadata["primary_key"]
-        cursor_field = metadata["cursor_field"]
-        ingestion_type = metadata.get("ingestion_type", "cdc")
+        primary_key = metadata[table]["primary_key"]
+        cursor_field = metadata[table]["cursor_field"]
+        ingestion_type = metadata[table].get("ingestion_type", "cdc")
         view_name = table + "_staging"
 
         if ingestion_type == "cdc":
@@ -77,10 +88,6 @@ def ingest(allow_list: list[str]):
 
     for table_name in allow_list:
         _create_table(table_name)
-
-
-# Register the sources
-spark.dataSource.register(LakeflowSource)
 
 # Ingest objects from the list
 ingest(object_list)
