@@ -1,6 +1,11 @@
 import dlt
 from pyspark.sql.functions import col, expr
+from libs.spec import SpecParser
+from pipeline_spec import *
 
+spec = SpecParser(pipeline_spec)
+connection_name = spec.connection_name()
+table_list = spec.get_tables()
 
 def _create_cdc_table(table, primary_key, cursor_field, view_name):
     """Create CDC table using streaming and apply_changes"""
@@ -89,5 +94,5 @@ def ingest(allow_list: list[str]):
     for table_name in allow_list:
         _create_table(table_name)
 
-# Ingest objects from the list
-ingest(object_list)
+
+ingest(table_list)
