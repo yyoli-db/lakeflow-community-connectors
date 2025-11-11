@@ -19,3 +19,8 @@ Users can follow the instructions in `prompts/vibe_coding_instruction.md` to cre
 ## Tests
 
 This directory includes generic shared test suites to validate any connector source implementation.
+
+
+## TODO:
+1. Add dev guidelines
+2. Add general instruction on how to use community connector (e.g. update spec and create a SDP for ingestion)

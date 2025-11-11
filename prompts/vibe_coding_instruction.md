@@ -1,100 +1,131 @@
 # Connector Vibe-Coding Prompts
 
-## Step 1: Understanding Source Document
+## Step 1: Understanding & Document the Source API
 
-### Prompts
-Create a markdown document to summarize the source API based on the provided template.
+### Goal
+Produce a single Markdown document that accurately summarizes a source API for connector implementation. The document must be **complete, source-cited, and implementation-ready** (endpoints, auth, schemas, Python read paths, incremental strategy).
 
-**REQUIRED RESEARCH STEPS (must be completed BEFORE generating documentation):**
-1. **Check for user-provided documentation** - If the user provides API documentation, use that as the highest confidence source
-2. **Search official API documentation** - Use WebSearch/WebFetch to find and review the official API documentation
-3. **Find existing implementations** - Search for existing connector implementations (Airbyte OSS(high confidence), Singer, dlthub, etc.) using WebSearch
-4. **Verify current API endpoints and schemas** - Cross-reference multiple sources to ensure accuracy
-5. **Document sources used** - Include a "Sources" section at the end listing all URLs and references used
+### Output Contract (Strict) 
+Create one file named `<source_name>_api_doc.md` under `sources/<source_name>/` directory following the `source_api_doc_template.md`. 
+
+**General rules**
+- No invented fields. No placeholders unless clearly marked `TBD:` with a short reason.
+- If multiple auth methods exist, **choose one** preferred method and **remove others** from the final doc (note rationale in `Known Quirks & Edge Cases`).
+- All claims must be supported by the **Research Log** and **Sources**.
+
+### Required Research Steps (do these before writing)
+1. **Check user-provided docs** (highest confidence).
+2. **Find official API docs** (WebSearch/WebFetch).
+3. **Locate reference implementations** (Airbyte OSS—highest non-official confidence; also Singer, dltHub, etc.).
+4. **Verify endpoints & schemas** by cross-referencing **at least two** sources (official > reference impl > reputable blogs).
+5. **Record everything** in `## Research Log` and list full URLs in `## Sources`.
+
+**Conflict resolution**
+- Precedence: **Official docs > Actively maintained OSS (Airbyte) > Other**.
+- If unresolved: keep the higher-safety interpretation, mark `TBD:` and add a note in `Known Quirks & Edge Cases`.
 
 **Documentation Requirements:**
-- Focus on endpoints, authentication parameters, object schemas, Python API for reading data, and incremental read strategy
-- Please include all fields in the schema. DO NOT hide any fields using links
+- Fill out every section of the documentation template. If any section cannot be completed, add a note to explain.
+- Focus on endpoints, authentication parameters, object schemas, Python API for reading data, and incremental read strategy.
+- Please include all fields in the schema. DO NOT hide any fields using links.
 - All information must be backed by official sources or verified or reliable implementations
-- If conflicting information is found, prioritize official API documentation
 
-### Notes
-- **NEVER generate API documentation from memory alone** - always research first
-- Analyze existing implementations (e.g., Airbyte OSS) to fill in the source API details
-- Use the `source_api_doc_template.md`
-- If multiple authentication methods are available, select the preferred method and remove the others from the generated documentation.
-- For OAuth, the connector implementation should not handle the entire OAuth flow. Instead, store credentials such as client_id, client_secret, and refresh_token, so the connector code can use them to obtain a temporary token for accessing the source system.
+### Research Log 
+Add a table:
+
+| Source Type | URL | Accessed (UTC) | Confidence (High/Med/Low) | What it confirmed |
+|---|---|---|---|---|
+| Official Docs | https://… | 2025-11-10 | High | Auth params, rate limits |
+| Airbyte | https://… | 2025-11-10 | High | Cursor field, pagination |
+| Other | https://… | 2025-11-10 | Med | Field descriptions |
 
 ### Recommendations
-- Try to get the connector working end-to-end while just ingesting a single table to begin with. This will help identify gaps in the authentication and any other setup issues.
-- Once the single table ingestion is successful, proceed to implement the full connector incrementally while keeping on testing the new features(eg:- incremental sync, deletes support) implemented.
+- **NEVER generate API documentation from memory alone** - always research first
+- Do **not** include SDK-specific code beyond minimal Python HTTP examples.
+- Analyze existing implementations (e.g., Airbyte OSS) to fill in the source API details
+- Focus on a single table / object to begin with in the source API documentation if there are many different objects with different APIs. 
+- Once the single table ingestion is successful, repeat the steps to include more tables.
 
-## Step 2: Create a UC Connection
+### Acceptance Checklist (Reviewer must tick all)
+- [ ] All required headings present and in order.
+- [ ] Every field in each schema is listed (no omissions).
+- [ ] Exactly one authentication method is documented and actionable.
+- [ ] Endpoints include params, examples, and pagination details.
+- [ ] Incremental strategy defines cursor, order, lookback, and delete handling.
+- [ ] Research Log completed; Sources include full URLs.
+- [ ] No unverifiable claims; any gaps marked `TBD:` with rationale.
 
-**Note:** This is a manual step
+---
 
-### Option 1: Use Secret Service
-Use a secret scope to mimic a UC connection
+## Step 2: Set Up Credentials & Tokens for Source
 
-```bash
-databricks secrets create-scope <connection_name>
-databricks secrets put-secret <connection_name> <param_name>
-databricks secrets put-secret <connection_name> <param_name>
+### Development
+Create a file `dev_config.json` under `sources/{source_name}/configs` with required fields based on the source API documentation.
+Example:
+```json
+{
+  "user": "YOUR_USER_NAME",
+  "password": "YOUR_PASSWORD",
+  "token": "YOUR_TOKEN"
+}
 ```
 
-### Option 2: Create UC Connection via UI or API
-> **Status:** Not ready yet
+### End-to-end Run: Create UC Connection via UI or API
+**Ignore** Fill prompts when building the real agent.
+
+---
 
 ## Step 3: Generate the Connector Code in Python
 
-### Prompts
-Implement the interface defined in `@lakeflow_connect.py` based on the source API documentation <link the doc summary>
+### Goal
+Implement the Python connector for **{{source_name}}** that conforms exactly to the interface defined in  
+`sources/interface/lakeflow_connect.py`. The implementation should enable reading data from the source API (as documented in Step 1). 
 
-**Requirements:**
-- Implement all functions
-- When returning the schema in the get_table_details function, prefer using StructType over MapType to enforce explicit typing of sub-columns. - - Avoid flattening nested fields when parsing JSON data.
+### Implementation Requirements 
+- Implement all methods declared in the interface.
+- When returning the schema in the `get_table_schema` function, prefer using StructType over MapType to enforce explicit typing of sub-columns.
+- Avoid flattening nested fields when parsing JSON data.
 - Prefer using `LongType` over `IntegerType`
+- If `ingestion_type` returned from `read_table_metadata` is `cdc`, then `primary_key` and `cursor_field` are both required.
 - In logic of processing records, if a StructType field is absent in the response, assign None as the default value instead of an empty dictionary {}.
-- Please avoid creating mock objects in the implementation.
-- Please do not add an extra main function - only implement the defined functions within the LakeflowConnect class. 
-- You can refer to `example/example.py` or other connectors under `connector_sources` as examples
+- Avoid creating mock objects in the implementation.
+- Do not add an extra main function - only implement the defined functions within the LakeflowConnect class. 
+- Refer to `example/example.py` or other connectors under `connector_sources` as examples
+
+---
 
 ## Step 4: Run Test and Fix
 
-### Prompts 
-#### If using IDE like cursor
-- Run the test defined in `test/test_suite.py`
-- Please use this option <fill in the parameters needed to connect to the testing instance> to initialize for testing
-- Generate code to write to the source system based on the source API
+### Goal
+Validate the generated connector for **{{source_name}}** by executing the provided test suite or notebook, diagnosing failures, and applying minimal, targeted fixes until all tests pass. 
+
+**If using IDE like cursor**
+- Run the test defined in `test/test_suite.py` using the `configs/
+- Please use this option from `sources/{source_name}/configs/dev_configs.json` to initialize for testing.
+- Generate code to write to the source system based on the source API documentation.
 - Run the test to validate
 
-#### If using chatbot and need to run notebook
+**If using chatbot and need to run notebook**
 - Import `test/run_test_notebook.py` and update the second cell with the `connection_name` you created in step 2.
 - Run the notebook.
 - If you encounter any errors, you can provide them to the chatbot to help debug and fix the generated code.
 
 
-### Notes
-This step is more interactive. Based on testing results, we need to make various adjustments
+**Notes**
+- This step is more interactive. Based on testing results, we need to make various adjustments
+- For external users, please remove the `dev_config.json` after this step.
+
+---
 
 ## Step 5: Create a Public Connector Documentation
 
-### Prompts
-Create public documentation for the users of the connector based on the template.
+### Goal
+Generate the **public-facing documentation** for the **{{source_name}}** connector, targeted at end users.
 
-**Requirements:**
-- Please use the code implementation as the source of truth
-- Use the source API documentation to cover anything missing
-- Always include a section about how to configure the parameters needed to connect to the source system
+### Output Contract 
+Produce a Markdown file based on the standard template `community_connector_doc_template.md` at `sources/{{source_name}}/README.md`.
 
-### Notes
-Use `lakeflow_connector_doc_template.md`
-
-### Step 6: Test pipeline end to end
-
-**This step is manual**
-- Create a new notebook and import `lakeflow_connect_notebook.py`.
-- In the first cell, add the implementation for your specific source connector.
-- In the second cell, set the connection_name and specify the list of objects you want to ingest.
-- Create and run an LDP pipeline using this notebook.
-- You can follow the detailed steps provided in the public connector documentation generated in step 5.
+### Documentation Requirements
+- Please use the code implementation as the source of truth.
+- Use the source API documentation to cover anything missing.
+- Always include a section about how to configure the parameters needed to connect to the source system.
