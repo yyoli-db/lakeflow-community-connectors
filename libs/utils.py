@@ -3,7 +3,7 @@ from pyspark.sql.types import *
 from datetime import datetime
 
 
-def parse_value(value, field_type):
+def parse_value(value: Any, field_type: DataType) -> Any:
     """
     Converts a JSON value into a PySpark-compatible data type based on the provided field type.
     """
@@ -22,11 +22,20 @@ def parse_value(value, field_type):
         # For StructType, recursively parse fields into a Row
         field_dict = {}
         for field in field_type.fields:
-            # Only process fields that exist in the input, allowing for optional fields
-            if field.name in value or not field.nullable:
+            # When a field does not exist in the input:
+            # 1. set it to None when schema marks it as nullable
+            # 2. Otherwise, raise an error.
+            if field.name in value:
                 field_dict[field.name] = parse_value(
                     value.get(field.name), field.dataType
                 )
+            elif field.nullable:
+                field_dict[field.name] = None
+            else:
+                raise ValueError(
+                    f"Field {field.name} is not nullable but not found in the input"
+                )
+
         return Row(**field_dict)
     elif isinstance(field_type, ArrayType):
         # For ArrayType, parse each element in the array
@@ -128,4 +137,3 @@ def parse_value(value, field_type):
         raise ValueError(
             f"Error converting '{value}' ({type(value)}) to {field_type}: {str(e)}"
         )
-

@@ -1,6 +1,3 @@
-import requests
-import base64
-import json
 from pyspark.sql.types import *
 from datetime import datetime
 from typing import Iterator, Any
@@ -24,15 +21,22 @@ class LakeflowConnect:
             A list of table names.
         """
 
-    def get_table_details(self, table_name: str) -> (StructType, dict):
+    def get_table_schema(self, table_name: str) -> StructType:
         """
-        Fetch the schema and metadata of a table.
+        Fetch the schema of a table.
         Args:
-            table_name: The name of the table to fetch the schema and metadata for.
+            table_name: The name of the table to fetch the schema for.
         Returns:
-            A tuple of (schema, metadata).
-            schema: A StructType object representing the schema of the table.
-            metadata: A dictionary containing the metadata of the table. It should include the following keys:
+            A StructType object representing the schema of the table.
+        """
+
+    def read_table_metadata(self, table_name: str) -> dict:
+        """
+        Fetch the metadata of a table.
+        Args:
+            table_name: The name of the table to fetch the metadata for.
+        Returns:
+            A dictionary containing the metadata of the table. It should include the following keys:
                 - primary_key: The name of the primary key of the table.
                 - cursor_field: The name of the field to use as a cursor for incremental loading.
                 - ingestion_type: The type of ingestion to use for the table. It should be one of the following values:
@@ -58,4 +62,3 @@ class LakeflowConnect:
             records: An iterator of records in JSON format.
             offset: An offset in dict.
         """
-

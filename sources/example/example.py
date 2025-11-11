@@ -1,11 +1,11 @@
-import json
 import random
 from typing import Dict, List, Tuple, Any, Iterator
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType
 
 
 # This is an example implementation of the LakeflowConnect class.
-class LakeflowConnect():
+# Test a change 123
+class LakeflowConnect:
     def __init__(self, options: Dict[str, str]) -> None:
         """
         Initialize source parameters. Options may include authentication or other configs.
@@ -21,30 +21,41 @@ class LakeflowConnect():
         """
         return self.tables
 
-    def get_table_details(self, table: str) -> Tuple[StructType, Dict[str, str]]:
+    def get_table_schema(self, table_name: str) -> StructType:
         """
-        Returns the schema and metadata for a given table using StructType.
+        Fetch the schema of a table.
         """
-        if table == "my_table":
+        if table_name == "my_table":
             schema = StructType(
                 [
                     StructField("id", IntegerType(), False),
                     StructField("name", StringType(), True),
                 ]
             )
-            metadata = {"primary_key": "id", "ingestion_types": "append"}
-        elif table == "your_table":
+        elif table_name == "your_table":
             schema = StructType(
                 [
                     StructField("key", StringType(), False),
                     StructField("value", StringType(), True),
                 ]
             )
-            metadata = {"primary_key": "key", "ingestion_types": "append"}
         else:
-            raise ValueError(f"Unknown table: {table}")
+            raise ValueError(f"Unknown table: {table_name}")
 
-        return schema, metadata
+        return schema
+
+    def read_table_metadata(self, table_name: str) -> Dict[str, str]:
+        """
+        Fetch the metadata of a table.
+        """
+        if table_name == "my_table":
+            metadata = {"primary_key": "id", "ingestion_type": "append"}
+        elif table_name == "your_table":
+            metadata = {"primary_key": "key", "ingestion_type": "append"}
+        else:
+            raise ValueError(f"Unknown table: {table_name}")
+
+        return metadata
 
     def read_table(self, table_name: str, start_offset: dict) -> (Iterator[dict], dict):
         """
@@ -74,16 +85,16 @@ class LakeflowConnect():
         )
 
         for i in range(10):
-            record = {
-                "id": current_offset
-                if table_name == "my_table"
-                else str(current_offset),
-                "name"
-                if table_name == "my_table"
-                else "value": f"Value_{random.randint(1000, 9999)}",
-            }
+            if table_name == "my_table":
+                record = {
+                    "id": current_offset,
+                    "name": f"Name_{random.randint(1000, 9999)}",
+                }
+            else:
+                record = {
+                    "key": str(current_offset),
+                    "value": f"Value_{random.randint(1000, 9999)}",
+                }
             current_offset += 1
 
-            yield json.dumps(record)
-
-
+            yield record
