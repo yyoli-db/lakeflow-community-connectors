@@ -1,6 +1,6 @@
 import random
 from typing import Dict, List, Tuple, Any, Iterator
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType
+from pyspark.sql.types import StructType, StructField, LongType, StringType
 
 
 # This is an example implementation of the LakeflowConnect class.
@@ -28,7 +28,7 @@ class LakeflowConnect:
         if table_name == "my_table":
             schema = StructType(
                 [
-                    StructField("id", IntegerType(), False),
+                    StructField("id", LongType(), False),
                     StructField("name", StringType(), True),
                 ]
             )

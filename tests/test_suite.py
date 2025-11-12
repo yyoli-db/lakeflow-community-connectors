@@ -194,7 +194,8 @@ class LakeflowConnectTester:
         # Only run other tests if initialization succeeds
         if self.connector is not None:
             self.test_list_tables()
-            self.test_get_table_details()
+            self.test_get_table_schema()
+            self.test_read_table_metadata()
             self.test_read_table()
 
             # Test write functionality if connector_test_utils is available
@@ -304,15 +305,15 @@ class LakeflowConnectTester:
                 )
             )
 
-    def test_get_table_details(self):
-        """Test get_table_details method on all available tables"""
+    def test_get_table_schema(self):
+        """Test get_table_schema method on all available tables"""
         # First get all tables to test with
         try:
             tables = self.connector.list_tables()
             if not tables:
                 self._add_result(
                     TestResult(
-                        test_name="test_get_table_details",
+                        test_name="test_get_table_schema",
                         status=TestStatus.FAILED,
                         message="No tables available to test because list_tables returned an empty list",
                     )
@@ -322,9 +323,9 @@ class LakeflowConnectTester:
         except Exception:
             self._add_result(
                 TestResult(
-                    test_name="test_get_table_details",
+                    test_name="test_get_table_schema",
                     status=TestStatus.FAILED,
-                    message="Could not get tables for testing get_table_details",
+                    message="Could not get tables for testing get_table_schema",
                 )
             )
             return
@@ -336,19 +337,7 @@ class LakeflowConnectTester:
 
         for table_name in tables:
             try:
-                result = self.connector.get_table_details(table_name)
-
-                # Validate return type is tuple
-                if not isinstance(result, tuple) or len(result) != 2:
-                    failed_tables.append(
-                        {
-                            "table": table_name,
-                            "reason": f"Expected tuple of length 2, got {type(result).__name__} of length {len(result) if hasattr(result, '__len__') else 'unknown'}",
-                        }
-                    )
-                    continue
-
-                schema, metadata = result
+                schema = self.connector.get_table_schema(table_name)
 
                 # Validate schema
                 if not isinstance(schema, StructType):
@@ -360,14 +349,118 @@ class LakeflowConnectTester:
                     )
                     continue
 
+                # Check for IntegerType fields (should use LongType instead)
                 for field in schema:
-                    if isinstance(field, IntegerType):
+                    if isinstance(field.dataType, IntegerType):
                         failed_tables.append(
                             {
                                 "table": table_name,
                                 "reason": f"Schema field {field.name} is IntegerType, please always use LongType instead.",
                             }
                         )
+                        break
+                else:
+                    passed_tables.append(
+                        {
+                            "table": table_name,
+                            "schema_fields": len(schema.fields),
+                        }
+                    )
+
+            except Exception as e:
+                error_tables.append(
+                    {
+                        "table": table_name,
+                        "error": str(e),
+                        "traceback": traceback.format_exc(),
+                    }
+                )
+
+        # Generate overall result
+        total_tables = len(tables)
+        passed_count = len(passed_tables)
+        failed_count = len(failed_tables)
+        error_count = len(error_tables)
+
+        if error_count > 0:
+            # If any tables had errors, mark as ERROR
+            self._add_result(
+                TestResult(
+                    test_name="test_get_table_schema",
+                    status=TestStatus.ERROR,
+                    message=f"Tested {total_tables} tables: {passed_count} passed, {failed_count} failed, {error_count} errors",
+                    details={
+                        "total_tables": total_tables,
+                        "passed_tables": passed_tables,
+                        "failed_tables": failed_tables,
+                        "error_tables": error_tables,
+                    },
+                )
+            )
+        elif failed_count > 0:
+            # If any tables failed validation, mark as FAILED
+            self._add_result(
+                TestResult(
+                    test_name="test_get_table_schema",
+                    status=TestStatus.FAILED,
+                    message=f"Tested {total_tables} tables: {passed_count} passed, {failed_count} failed",
+                    details={
+                        "total_tables": total_tables,
+                        "passed_tables": passed_tables,
+                        "failed_tables": failed_tables,
+                        "error_tables": error_tables,
+                    },
+                )
+            )
+        else:
+            # All tables passed
+            self._add_result(
+                TestResult(
+                    test_name="test_get_table_schema",
+                    status=TestStatus.PASSED,
+                    message=f"Successfully retrieved table schema for all {total_tables} tables",
+                    details={
+                        "total_tables": total_tables,
+                        "passed_tables": passed_tables,
+                        "failed_tables": failed_tables,
+                        "error_tables": error_tables,
+                    },
+                )
+            )
+
+    def test_read_table_metadata(self):
+        """Test read_table_metadata method on all available tables"""
+        # First get all tables to test with
+        try:
+            tables = self.connector.list_tables()
+            if not tables:
+                self._add_result(
+                    TestResult(
+                        test_name="test_read_table_metadata",
+                        status=TestStatus.FAILED,
+                        message="No tables available to test because list_tables returned an empty list",
+                    )
+                )
+                return
+
+        except Exception:
+            self._add_result(
+                TestResult(
+                    test_name="test_read_table_metadata",
+                    status=TestStatus.FAILED,
+                    message="Could not get tables for testing read_table_metadata",
+                )
+            )
+            return
+
+        # Test each table
+        passed_tables = []
+        failed_tables = []
+        error_tables = []
+
+        for table_name in tables:
+            try:
+                metadata = self.connector.read_table_metadata(table_name)
 
                 # Validate metadata
                 if not isinstance(metadata, dict):
@@ -394,11 +487,15 @@ class LakeflowConnectTester:
                         {
                             "table": table_name,
                             "reason": f"Missing expected metadata keys: {missing_keys}",
-                            "schema_fields": len(schema.fields),
                             "metadata_keys": list(metadata.keys()),
                         }
                     )
-                elif self._should_validate_primary_key(
+                    continue
+
+                # Validate primary_key and cursor_field exist in schema if required
+                schema = self.connector.get_table_schema(table_name)
+
+                if self._should_validate_primary_key(
                     metadata
                 ) and not self._validate_primary_key(metadata["primary_key"], schema):
                     failed_tables.append(
@@ -415,7 +512,7 @@ class LakeflowConnectTester:
                     failed_tables.append(
                         {
                             "table": table_name,
-                            "reason": f"Cursor field field {metadata['cursor_field']} not found in schema",
+                            "reason": f"Cursor field {metadata['cursor_field']} not found in schema",
                             "cursor_field": metadata["cursor_field"],
                         }
                     )
@@ -423,7 +520,6 @@ class LakeflowConnectTester:
                     passed_tables.append(
                         {
                             "table": table_name,
-                            "schema_fields": len(schema.fields),
                             "metadata_keys": list(metadata.keys()),
                         }
                     )
@@ -447,7 +543,7 @@ class LakeflowConnectTester:
             # If any tables had errors, mark as ERROR
             self._add_result(
                 TestResult(
-                    test_name="test_get_table_details",
+                    test_name="test_read_table_metadata",
                     status=TestStatus.ERROR,
                     message=f"Tested {total_tables} tables: {passed_count} passed, {failed_count} failed, {error_count} errors",
                     details={
@@ -462,7 +558,7 @@ class LakeflowConnectTester:
             # If any tables failed validation, mark as FAILED
             self._add_result(
                 TestResult(
-                    test_name="test_get_table_details",
+                    test_name="test_read_table_metadata",
                     status=TestStatus.FAILED,
                     message=f"Tested {total_tables} tables: {passed_count} passed, {failed_count} failed",
                     details={
@@ -477,9 +573,9 @@ class LakeflowConnectTester:
             # All tables passed
             self._add_result(
                 TestResult(
-                    test_name="test_get_table_details",
+                    test_name="test_read_table_metadata",
                     status=TestStatus.PASSED,
-                    message=f"Successfully retrieved table details for all {total_tables} tables",
+                    message=f"Successfully retrieved table metadata for all {total_tables} tables",
                     details={
                         "total_tables": total_tables,
                         "passed_tables": passed_tables,
@@ -595,7 +691,7 @@ class LakeflowConnectTester:
                     continue
 
                 try:
-                    schema, metadata = self.connector.get_table_details(table_name)
+                    schema = self.connector.get_table_schema(table_name)
                     for record in sample_records:
                         parse_value(record, schema)
                 except Exception as parse_e:
@@ -932,7 +1028,7 @@ class LakeflowConnectTester:
         for test_table in insertable_tables:
             try:
                 # First, check if the table supports incremental ingestion
-                schema, metadata = self.connector.get_table_details(test_table)
+                metadata = self.connector.read_table_metadata(test_table)
 
                 # Get initial state for incremental read
                 initial_result = self.connector.read_table(test_table, {})
