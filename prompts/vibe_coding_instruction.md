@@ -100,19 +100,23 @@ Implement the Python connector for **{{source_name}}** that conforms exactly to 
 Validate the generated connector for **{{source_name}}** by executing the provided test suite or notebook, diagnosing failures, and applying minimal, targeted fixes until all tests pass. 
 
 **If using IDE like cursor**
-- Run the test defined in `test/test_suite.py` using the `configs/
+- Create a `test_{source_name}_lakeflow_connect.py` under `sources/{source_name}/test/` directory. 
+- Use `test/test_suite.py` to run test and follow `sources/example/test/test_example_lakeflow_connect.py` or other sources as an example.
 - Please use this option from `sources/{source_name}/configs/dev_configs.json` to initialize for testing.
-- Generate code to write to the source system based on the source API documentation.
-- Run the test to validate
+- Run test: `pytest sources/{source_name}/test/test_{source_name}_lakeflow_connect.py -v`
+- (Optional) Generate code to write to the source system based on the source API documentation.
+- Run more tests.
 
 **If using chatbot and need to run notebook**
-- Import `test/run_test_notebook.py` and update the second cell with the `connection_name` you created in step 2.
-- Run the notebook.
-- If you encounter any errors, you can provide them to the chatbot to help debug and fix the generated code.
+TODO: UPDATE THIS.
+- ~~Import `test/run_test_notebook.py` and update the second cell with the `connection_name` you created in step 2.~~
+- ~~Run the notebook.~~
+- ~~If you encounter any errors, you can provide them to the chatbot to help debug and fix the generated code.~~
 
 
 **Notes**
-- This step is more interactive. Based on testing results, we need to make various adjustments
+- This step is more interactive. Based on testing 
+results, we need to make various adjustments
 - For external users, please remove the `dev_config.json` after this step.
 
 ---
