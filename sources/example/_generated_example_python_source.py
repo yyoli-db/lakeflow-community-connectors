@@ -16,11 +16,7 @@ from typing import (
 )
 
 from pyspark.sql import Row
-from pyspark.sql.datasource import (
-    DataSource,
-    DataSourceReader,
-    SimpleDataSourceStreamReader,
-)
+from pyspark.sql.datasource import DataSource, DataSourceReader, SimpleDataSourceStreamReader
 from pyspark.sql.types import *
 import random
 
@@ -42,9 +38,7 @@ def register_lakeflow_source(spark):
         if isinstance(field_type, StructType):
             # Validate input for StructType
             if not isinstance(value, dict):
-                raise ValueError(
-                    f"Expected a dictionary for StructType, got {type(value)}"
-                )
+                raise ValueError(f"Expected a dictionary for StructType, got {type(value)}")
             # Spark Python -> Arrow conversion require missing StructType fields to be assigned None.
             if value == {}:
                 raise ValueError(
@@ -76,16 +70,12 @@ def register_lakeflow_source(spark):
                     # Try to convert to a single-element array if nulls are allowed
                     return [parse_value(value, field_type.elementType)]
                 else:
-                    raise ValueError(
-                        f"Expected a list for ArrayType, got {type(value)}"
-                    )
+                    raise ValueError(f"Expected a list for ArrayType, got {type(value)}")
             return [parse_value(v, field_type.elementType) for v in value]
         elif isinstance(field_type, MapType):
             # Handle MapType - new support
             if not isinstance(value, dict):
-                raise ValueError(
-                    f"Expected a dictionary for MapType, got {type(value)}"
-                )
+                raise ValueError(f"Expected a dictionary for MapType, got {type(value)}")
             return {
                 parse_value(k, field_type.keyType): parse_value(v, field_type.valueType)
                 for k, v in value.items()
@@ -105,9 +95,7 @@ def register_lakeflow_source(spark):
                 elif isinstance(value, (int, float)):
                     return int(value)
                 raise ValueError(f"Cannot convert {value} to integer")
-            elif isinstance(field_type, FloatType) or isinstance(
-                field_type, DoubleType
-            ):
+            elif isinstance(field_type, FloatType) or isinstance(field_type, DoubleType):
                 # New support for floating point types
                 if isinstance(value, str) and value.strip():
                     return float(value)
@@ -173,6 +161,7 @@ def register_lakeflow_source(spark):
                 f"Error converting '{value}' ({type(value)}) to {field_type}: {str(e)}"
             )
 
+
     ########################################################
     # sources/example/example.py
     ########################################################
@@ -200,7 +189,7 @@ def register_lakeflow_source(spark):
             if table_name == "my_table":
                 schema = StructType(
                     [
-                        StructField("id", IntegerType(), False),
+                        StructField("id", LongType(), False),
                         StructField("name", StringType(), True),
                     ]
                 )
@@ -229,9 +218,7 @@ def register_lakeflow_source(spark):
 
             return metadata
 
-        def read_table(
-            self, table_name: str, start_offset: dict
-        ) -> (Iterator[dict], dict):
+        def read_table(self, table_name: str, start_offset: dict) -> (Iterator[dict], dict):
             """
             Read data from a table and return an iterator of records along with the next offset.
             """
@@ -273,6 +260,7 @@ def register_lakeflow_source(spark):
 
                 yield record
 
+
     ########################################################
     # pipeline/lakeflow_python_source.py
     ########################################################
@@ -280,6 +268,7 @@ def register_lakeflow_source(spark):
     METADATA_TABLE = "_lakeflow_metadata"
     TABLE_NAME = "tableName"
     TABLE_NAME_LIST = "tableNameList"
+
 
     class LakeflowStreamReader(SimpleDataSourceStreamReader):
         """
@@ -317,6 +306,7 @@ def register_lakeflow_source(spark):
             # are missed in the returned records.
             return self.read(start)[0]
 
+
     class LakeflowBatchReader(DataSourceReader):
         def __init__(
             self,
@@ -348,6 +338,7 @@ def register_lakeflow_source(spark):
                 all_records.append({"tableName": table, **metadata})
             return all_records
 
+
     class LakeflowSource(DataSource):
         def __init__(self, options):
             self.options = options
@@ -377,5 +368,6 @@ def register_lakeflow_source(spark):
 
         def simpleStreamReader(self, schema: StructType):
             return LakeflowStreamReader(self.options, schema, self.lakeflow_connect)
+
 
     spark.dataSource.register(LakeflowSource)

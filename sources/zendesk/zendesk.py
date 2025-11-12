@@ -1,6 +1,5 @@
 import requests
 import base64
-import json
 from pyspark.sql.types import *
 from datetime import datetime
 

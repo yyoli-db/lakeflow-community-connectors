@@ -7,14 +7,10 @@
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Iterator
+from typing import Any, Iterator
 
 from pyspark.sql import Row
-from pyspark.sql.datasource import (
-    DataSource,
-    DataSourceReader,
-    SimpleDataSourceStreamReader,
-)
+from pyspark.sql.datasource import DataSource, DataSourceReader, SimpleDataSourceStreamReader
 from pyspark.sql.types import *
 import base64
 import requests
@@ -37,9 +33,7 @@ def register_lakeflow_source(spark):
         if isinstance(field_type, StructType):
             # Validate input for StructType
             if not isinstance(value, dict):
-                raise ValueError(
-                    f"Expected a dictionary for StructType, got {type(value)}"
-                )
+                raise ValueError(f"Expected a dictionary for StructType, got {type(value)}")
             # Spark Python -> Arrow conversion require missing StructType fields to be assigned None.
             if value == {}:
                 raise ValueError(
@@ -71,16 +65,12 @@ def register_lakeflow_source(spark):
                     # Try to convert to a single-element array if nulls are allowed
                     return [parse_value(value, field_type.elementType)]
                 else:
-                    raise ValueError(
-                        f"Expected a list for ArrayType, got {type(value)}"
-                    )
+                    raise ValueError(f"Expected a list for ArrayType, got {type(value)}")
             return [parse_value(v, field_type.elementType) for v in value]
         elif isinstance(field_type, MapType):
             # Handle MapType - new support
             if not isinstance(value, dict):
-                raise ValueError(
-                    f"Expected a dictionary for MapType, got {type(value)}"
-                )
+                raise ValueError(f"Expected a dictionary for MapType, got {type(value)}")
             return {
                 parse_value(k, field_type.keyType): parse_value(v, field_type.valueType)
                 for k, v in value.items()
@@ -100,9 +90,7 @@ def register_lakeflow_source(spark):
                 elif isinstance(value, (int, float)):
                     return int(value)
                 raise ValueError(f"Cannot convert {value} to integer")
-            elif isinstance(field_type, FloatType) or isinstance(
-                field_type, DoubleType
-            ):
+            elif isinstance(field_type, FloatType) or isinstance(field_type, DoubleType):
                 # New support for floating point types
                 if isinstance(value, str) and value.strip():
                     return float(value)
@@ -168,6 +156,7 @@ def register_lakeflow_source(spark):
                 f"Error converting '{value}' ({type(value)}) to {field_type}: {str(e)}"
             )
 
+
     ########################################################
     # sources/zendesk/zendesk.py
     ########################################################
@@ -182,8 +171,7 @@ def register_lakeflow_source(spark):
             token = self.api_token
             auth_str = f"{user}:{token}"
             self.auth_header = {
-                "Authorization": "Basic "
-                + base64.b64encode(auth_str.encode()).decode(),
+                "Authorization": "Basic " + base64.b64encode(auth_str.encode()).decode(),
                 "Content-Type": "application/json",
             }
 
@@ -282,9 +270,9 @@ def register_lakeflow_source(spark):
                         StructField("comments_disabled", BooleanType()),
                         StructField("draft", BooleanType()),
                         StructField("promoted", BooleanType()),
-                        StructField("position", IntegerType()),
-                        StructField("vote_sum", IntegerType()),
-                        StructField("vote_count", IntegerType()),
+                        StructField("position", LongType()),
+                        StructField("vote_sum", LongType()),
+                        StructField("vote_count", LongType()),
                         StructField("section_id", LongType()),
                         StructField("created_at", StringType()),
                         StructField("updated_at", StringType()),
@@ -370,8 +358,8 @@ def register_lakeflow_source(spark):
                         StructField("html_url", StringType()),
                         StructField("name", StringType()),
                         StructField("description", StringType()),
-                        StructField("position", IntegerType()),
-                        StructField("follower_count", IntegerType()),
+                        StructField("position", LongType()),
+                        StructField("follower_count", LongType()),
                         StructField("community_id", LongType()),
                         StructField("created_at", StringType()),
                         StructField("updated_at", StringType()),
@@ -406,7 +394,7 @@ def register_lakeflow_source(spark):
                         StructField("report_csv", BooleanType()),
                         StructField("restricted_agent", BooleanType()),
                         StructField("role", StringType()),
-                        StructField("role_type", IntegerType()),
+                        StructField("role_type", LongType()),
                         StructField("shared", BooleanType()),
                         StructField("shared_agent", BooleanType()),
                         StructField("shared_phone_number", BooleanType()),
@@ -604,9 +592,7 @@ def register_lakeflow_source(spark):
             current_page = page
 
             while True:
-                current_url = (
-                    f"{self.base_url}/{endpoint}?page={current_page}&per_page=100"
-                )
+                current_url = f"{self.base_url}/{endpoint}?page={current_page}&per_page=100"
                 resp = requests.get(current_url, headers=self.auth_header)
 
                 if resp.status_code != 200:
@@ -638,6 +624,7 @@ def register_lakeflow_source(spark):
 
             return all_records, {"page": current_page}
 
+
     ########################################################
     # pipeline/lakeflow_python_source.py
     ########################################################
@@ -645,6 +632,7 @@ def register_lakeflow_source(spark):
     METADATA_TABLE = "_lakeflow_metadata"
     TABLE_NAME = "tableName"
     TABLE_NAME_LIST = "tableNameList"
+
 
     class LakeflowStreamReader(SimpleDataSourceStreamReader):
         """
@@ -682,6 +670,7 @@ def register_lakeflow_source(spark):
             # are missed in the returned records.
             return self.read(start)[0]
 
+
     class LakeflowBatchReader(DataSourceReader):
         def __init__(
             self,
@@ -713,6 +702,7 @@ def register_lakeflow_source(spark):
                 all_records.append({"tableName": table, **metadata})
             return all_records
 
+
     class LakeflowSource(DataSource):
         def __init__(self, options):
             self.options = options
@@ -742,5 +732,6 @@ def register_lakeflow_source(spark):
 
         def simpleStreamReader(self, schema: StructType):
             return LakeflowStreamReader(self.options, schema, self.lakeflow_connect)
+
 
     spark.dataSource.register(LakeflowSource)
