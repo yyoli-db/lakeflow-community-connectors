@@ -13,9 +13,7 @@ The Lakeflow HubSpot Connector allows you to extract data from your HubSpot inst
 
 To configure the HubSpot connector, you'll need to provide the following parameters in your connector options:
 
-| Parameter | Type | Required | Description | Example |
-|-----------|------|----------|-------------|---------|
-| `access_token` | string | Yes | HubSpot Private App access token | `abcd` |
+1. access_token
 
 ### Getting Your Private App Access Token
 
