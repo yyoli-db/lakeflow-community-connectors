@@ -15,7 +15,7 @@ To configure the HubSpot connector, you'll need to provide the following paramet
 
 | Parameter | Type | Required | Description | Example |
 |-----------|------|----------|-------------|---------|
-| `access_token` | string | Yes | HubSpot Private App access token | `pat-na1-11111111-2222-3333-4444-555555555555` |
+| `access_token` | string | Yes | HubSpot Private App access token | `abcd` |
 
 ### Getting Your Private App Access Token
 
