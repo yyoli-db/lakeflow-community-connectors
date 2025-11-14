@@ -1,0 +1,21 @@
+# IDE
+.idea/
+.vscode/
+
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Configs with secrets (be careful not to commit real credentials)
+**/configs/*_config.json
+!**/configs/example_config.json
+
