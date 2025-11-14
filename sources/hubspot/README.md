@@ -25,15 +25,13 @@ To configure the HubSpot connector, you'll need to provide the following paramet
 6. Create the app and copy the access token
 7. Store the token securely (you won't be able to see it again)
 
-### Create a UC connection or Secret
-UC connection is currently not supported yet.
+### Create a Unity Catalog Connection
 
-Create a secret that stores the parameters needed, using Databricks CLI tool
+A Unity Catalog connection for this connector can be created in two ways via the UI:
+1. Follow the Lakeflow Community Connector UI flow from the "Add Data" page
+2. Navigate to the Unity Catalog UI and create a "Lakeflow Community Connector" connection
 
-```
-databricks secrets create-scope <connection_name>
-databricks secrets put-secret <connection_name> access_token 
-```
+The connection can also be created using the standard Unity Catalog API.
 
 ## Objects Supported
 

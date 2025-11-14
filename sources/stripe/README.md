@@ -23,16 +23,13 @@ To configure the Stripe connector, you'll need to provide the following paramete
 3. Copy your **Secret key** (starts with `sk_test_` for test mode or `sk_live_` for live mode)
 4. **Important**: Keep your secret key secure - never share it publicly
 
-### Create a UC connection or Secret
+### Create a Unity Catalog Connection
 
-UC connection is currently not supported yet.
+A Unity Catalog connection for this connector can be created in two ways via the UI:
+1. Follow the Lakeflow Community Connector UI flow from the "Add Data" page
+2. Navigate to the Unity Catalog UI and create a "Lakeflow Community Connector" connection
 
-Create a secret that stores the parameters needed, using Databricks CLI tool:
-
-```bash
-databricks secrets create-scope stripe_connection
-databricks secrets put-secret stripe_connection api_key
-```
+The connection can also be created using the standard Unity Catalog API.
 
 ## Objects Supported
 
