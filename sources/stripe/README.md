@@ -186,35 +186,15 @@ Stripe supports soft deletion for customers. The `deleted` field will be `true` 
 ## How to Run
 
 ### Step 1: Clone/Copy the Source Connector Code
-Copy the code from `stripe.py` and paste it into the connector template notebook.
+
+Follow the Lakeflow Community Connector UI, which will guide you through setting up a pipeline using the selected source connector code.
 
 ### Step 2: Configure Your Pipeline
-1. Update the `connection_name` in the notebook to your secret scope name
-2. Update the `object_list` to include tables you want to ingest:
-   ```python
-   connection_name = "stripe_connection"
-   object_list = [
-       "customers",
-       "charges",
-       "payment_intents",
-       "subscriptions",
-       "invoices",
-       "products",
-       "prices"
-       # Add more tables as needed
-   ]
-   ```
-3. (Optional) Customize the source connector code if needed for special use cases
 
-**Available Tables**: customers, charges, payment_intents, subscriptions, invoices, products, prices, refunds, disputes, payment_methods, balance_transactions, payouts, invoice_items, plans, events, coupons
+1. Update the `pipeline_spec` in the main pipeline file (e.g., `ingest.py`).
+2. (Optional) Customize the source connector code if needed for special use cases.
 
-### Step 3: Run and Schedule the LDP Pipeline
-
-The connector will:
-- Create streaming tables for all selected Stripe objects
-- Apply CDC changes using Delta Live Tables
-- Maintain SCD Type 1 (latest state) by default
-- Track incremental changes using the `created` timestamp cursor
+### Step 3: Run and Schedule the Pipeline
 
 ## Implementation Details
 
@@ -247,52 +227,6 @@ Examples:
 | Object | StringType | Stored as JSON string |
 | Array | ArrayType(StringType) | Lists like `preferred_locales` |
 
-## Testing
-
-### Running the Test Suite
-
-The connector includes a comprehensive test suite that validates all functionality. See [TESTING.md](TESTING.md) for detailed testing documentation.
-
-#### Quick Start - Command Line
-
-```bash
-# Set your Stripe API key
-export STRIPE_API_KEY="sk_test_your_key_here"
-
-# Run tests
-cd connector_sources/stripe
-python run_stripe_tests.py
-```
-
-#### Quick Start - Databricks Notebook
-
-1. Upload `test_stripe_notebook.py` to Databricks
-2. Set `connection_name` to your secret scope
-3. Run all cells
-
-### What Tests Validate
-
-- ✅ Connector initialization with API key
-- ✅ Table listing (`list_tables()`)
-- ✅ Schema generation (`get_table_schema()`)
-- ✅ Metadata reading (`read_table_metadata()`)
-- ✅ Data reading (`read_table()`)
-- ✅ Record format and parsing
-- ✅ Schema validation (no IntegerType fields)
-- ✅ Metadata correctness (primary key, cursor field, ingestion type)
-
-### Expected Results
-
-When all tests pass, you'll see:
-```
-Total Tests: 5
-Passed: 5
-Failed: 0
-Errors: 0
-Success Rate: 100.0%
-```
-
-For troubleshooting test failures, see [TESTING.md](TESTING.md).
 
 ## Best Practices
 

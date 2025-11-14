@@ -117,14 +117,15 @@ All objects follow the same base structure:
 ## How to Run
 
 ### Step 1: Clone/Copy the Source Connector Code
-Copy the code from git master and paste in the connector template notebook.
+
+Follow the Lakeflow Community Connector UI, which will guide you through setting up a pipeline using the selected source connector code.
 
 ### Step 2: Configure Your Pipeline
-1. Update the connection_name in the notebook
-2. Update the objects to ingest in the notebook
-3. (Optional) customize the source connector code if needed for special use case.
 
-### Step 3: Run and Schedule the LDP Pipeline
+1. Update the `pipeline_spec` in the main pipeline file (e.g., `ingest.py`).
+2. (Optional) Customize the source connector code if needed for special use cases.
+
+### Step 3: Run and Schedule the Pipeline
 
 #### Best Practices
 
