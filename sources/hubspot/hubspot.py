@@ -17,6 +17,8 @@ class LakeflowConnect:
         }
         # Cache for discovered schemas to avoid repeated API calls
         self._schema_cache = {}
+        # Cache for table metadata
+        self._metadata_cache = {}
         
         # Centralized object metadata configuration
         self._object_config = {
@@ -148,7 +150,16 @@ class LakeflowConnect:
         Returns:
             A StructType object representing the schema of the table.
         """
-        schema, _ = self.get_table_details(table_name)
+        # Check cache first
+        if table_name in self._schema_cache:
+            return self._schema_cache[table_name]
+        
+        # Discover schema via API
+        schema = self._discover_table_schema(table_name)
+        
+        # Cache the result
+        self._schema_cache[table_name] = schema
+        
         return schema
 
     def read_table_metadata(self, table_name: str) -> dict:
@@ -167,33 +178,44 @@ class LakeflowConnect:
                     - "cdc": capture incremental changes
                     - "append": incremental append
         """
-        _, metadata = self.get_table_details(table_name)
-        return metadata
-
-    def get_table_details(self, table_name: str):
-        """
-        Get table schema and metadata. Uses API discovery for dynamic schema generation.
-        """
         # Check cache first
-        if table_name in self._schema_cache:
-            return self._schema_cache[table_name]
+        if table_name in self._metadata_cache:
+            return self._metadata_cache[table_name]
         
-        # Discover schema via API
-        schema, metadata = self._discover_table_schema(table_name)
+        # Get metadata from object configuration
+        metadata = self._get_table_metadata(table_name)
         
         # Cache the result
-        self._schema_cache[table_name] = (schema, metadata)
+        self._metadata_cache[table_name] = metadata
         
-        return schema, metadata
+        return metadata
 
-    def _discover_table_schema(self, table_name: str) -> Tuple[StructType, Dict]:
+    def _discover_table_schema(self, table_name: str) -> StructType:
         """
-        Discover table schema by calling HubSpot Properties API
+        Discover table schema by calling HubSpot Properties API.
+        
+        Args:
+            table_name: Name of the table/object to discover schema for
+            
+        Returns:
+            StructType representing the table schema
         """
         # All CRM objects follow the same schema pattern
         return self._discover_crm_object_schema(table_name)
+    
+    def _get_table_metadata(self, table_name: str) -> dict:
+        """
+        Get metadata for a table based on object configuration.
+        """
+        config = self._get_object_config(table_name)
+        
+        return {
+            "primary_key": config["primary_key"],
+            "cursor_field": config["cursor_field"],
+            "ingestion_type": "cdc"
+        }
 
-    def _discover_crm_object_schema(self, table_name: str) -> Tuple[StructType, Dict]:
+    def _discover_crm_object_schema(self, table_name: str) -> StructType:
         """
         Discover CRM object schema using HubSpot Properties API.
         Works for contacts, companies, deals, tickets, and custom objects.
@@ -216,7 +238,6 @@ class LakeflowConnect:
         
         # Build dynamic properties schema based on API response
         properties_fields = []
-        all_property_names = []
         
         if isinstance(properties, list):
             for prop in properties:
@@ -226,23 +247,13 @@ class LakeflowConnect:
                 # Map HubSpot property types to Spark types
                 spark_type = self._map_hubspot_type_to_spark(prop_type)
                 properties_fields.append(StructField(f"properties_{prop_name}", spark_type, True))
-                all_property_names.append(prop_name)
         
         # Combine base fields with flattened properties
         all_fields = base_fields + properties_fields
         
         schema = StructType(all_fields)
-        metadata = {
-            "primary_key": config["primary_key"],
-            "cursor_field": config["cursor_field"],
-            "cursor_property_field": config["cursor_property_field"],
-            "associations": config["associations"],
-            "property_names": all_property_names,
-            "supports_incremental": True,
-            "object_type": table_name
-        }
         
-        return schema, metadata
+        return schema
 
     def _get_associations_for_object(self, table_name: str) -> List[str]:
         """Get associations to include for the given object type"""
@@ -307,7 +318,7 @@ class LakeflowConnect:
         """Unified method to read data from HubSpot API"""
         
         # Get discovered properties and object configuration
-        _, metadata = self.get_table_details(table_name)
+        metadata = self.read_table_metadata(table_name)
         property_names = metadata.get("property_names", [])
         cursor_property_field = metadata.get("cursor_property_field")
         associations = metadata.get("associations", [])
@@ -481,58 +492,3 @@ class LakeflowConnect:
                 }
         except Exception as e:
             return {"status": "error", "message": f"Connection failed: {str(e)}"}
-
-    def get_schema_info(self, table_name: str) -> Dict:
-        """
-        Get detailed schema information for debugging and validation
-        """
-        try:
-            schema, metadata = self.get_table_details(table_name)
-            
-            # Convert schema to a readable format
-            fields_info = []
-            for field in schema.fields:
-                fields_info.append({
-                    "name": field.name,
-                    "type": str(field.dataType),
-                    "nullable": field.nullable
-                })
-            
-            return {
-                "table_name": table_name,
-                "fields": fields_info,
-                "metadata": metadata,
-                "total_fields": len(fields_info)
-            }
-        except Exception as e:
-            return {"error": f"Failed to get schema info: {str(e)}"}
-
-    def validate_schema_discovery(self, table_name: str) -> Dict:
-        """
-        Validate that schema discovery is working correctly for any CRM object
-        """
-        try:
-            # Test API call to get properties for any object type
-            properties = self._get_object_properties(table_name)
-            
-            if isinstance(properties, dict) and "error" in properties:
-                return {
-                    "status": "error",
-                    "message": properties["error"],
-                    "api_accessible": False
-                }
-            
-            return {
-                "status": "success",
-                "table_name": table_name,
-                "properties_count": len(properties) if isinstance(properties, list) else 0,
-                "sample_properties": properties[:5] if isinstance(properties, list) and properties else [],
-                "api_accessible": True,
-                "supports_associations": table_name in ["contacts", "companies", "deals", "tickets", "calls", "emails", "meetings", "tasks", "notes"]
-            }
-        except Exception as e:
-            return {
-                "status": "error",
-                "message": f"Schema validation failed: {str(e)}",
-                "api_accessible": False
-            }
