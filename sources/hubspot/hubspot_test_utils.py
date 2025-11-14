@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Dict, List, Tuple
 
 
-class LakeflowConnectTestUtils(WriteToSource):
+class LakeflowConnectTestUtils:
     """
     Test utilities for HubSpot connector.
     Provides write-back functionality for testing HubSpot data ingestion.

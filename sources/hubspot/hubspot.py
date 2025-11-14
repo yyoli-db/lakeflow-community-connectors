@@ -209,9 +209,16 @@ class LakeflowConnect:
         """
         config = self._get_object_config(table_name)
         
+        # Get property names and cursor property field for API calls
+        properties = self._get_object_properties(table_name)
+        property_names = [prop["name"] for prop in properties]
+        
         return {
             "primary_key": config["primary_key"],
             "cursor_field": config["cursor_field"],
+            "cursor_property_field": config["cursor_property_field"],
+            "property_names": property_names,
+            "associations": config.get("associations", []),
             "ingestion_type": "cdc"
         }
 

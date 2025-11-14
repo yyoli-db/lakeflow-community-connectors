@@ -6,6 +6,7 @@ from pathlib import Path
 import tests.test_suite as test_suite
 from tests.test_suite import LakeflowConnectTester
 from sources.hubspot.hubspot import LakeflowConnect
+from sources.hubspot.hubspot_test_utils import LakeflowConnectTestUtils
 
 
 def load_config():
@@ -20,6 +21,7 @@ def test_hubspot_connector():
     # Inject the LakeflowConnect class into test_suite module's namespace
     # This is required because test_suite.py expects LakeflowConnect to be available
     test_suite.LakeflowConnect = LakeflowConnect
+    test_suite.LakeflowConnectTestUtils = LakeflowConnectTestUtils
 
     # Load configuration
     config = load_config()
