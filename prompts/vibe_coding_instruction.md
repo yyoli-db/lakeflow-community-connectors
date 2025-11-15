@@ -91,6 +91,7 @@ Implement the Python connector for **{{source_name}}** that conforms exactly to 
 - Avoid creating mock objects in the implementation.
 - Do not add an extra main function - only implement the defined functions within the LakeflowConnect class. 
 - The functions `get_table_schema`, `read_table_metadata`, and `read_table` accept a dictionary argument that may contain additional parameters for customizing how a particular table is read. Using these extra parameters is optional.
+- Do not include parameters and options required by individual tables in the connection settings; instead, assume these will be provided through the table options.
 - Refer to `example/example.py` or other connectors under `connector_sources` as examples
 
 ---
