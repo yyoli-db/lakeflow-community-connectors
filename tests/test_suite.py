@@ -5,6 +5,7 @@ from datetime import datetime
 import json
 from pyspark.sql.types import *
 from enum import Enum
+from libs.utils import parse_value
 
 
 class TestStatus(Enum):
@@ -51,136 +52,14 @@ class TestFailedException(Exception):
         self.report = report
 
 
-def parse_value(value, field_type):
-    """
-    Converts a JSON value into a PySpark-compatible data type based on the provided field type.
-    """
-    if value is None:
-        return None
-    # Handle complex types
-    if isinstance(field_type, StructType):
-        # Validate input for StructType
-        if not isinstance(value, dict):
-            raise ValueError(f"Expected a dictionary for StructType, got {type(value)}")
-        # Spark Python -> Arrow conversion require missing StructType fields to be assigned None.
-        if value == {}:
-            raise ValueError(
-                f"field in StructType cannot be an empty dict. Please assign None as the default value instead."
-            )
-        # For StructType, recursively parse fields into a Row
-        field_dict = {}
-        for field in field_type.fields:
-            # Only process fields that exist in the input, allowing for optional fields
-            if field.name in value or not field.nullable:
-                field_dict[field.name] = parse_value(
-                    value.get(field.name), field.dataType
-                )
-        return Row(**field_dict)
-    elif isinstance(field_type, ArrayType):
-        # For ArrayType, parse each element in the array
-        if not isinstance(value, list):
-            # Handle edge case: single value that should be an array
-            if field_type.containsNull:
-                # Try to convert to a single-element array if nulls are allowed
-                return [parse_value(value, field_type.elementType)]
-            else:
-                raise ValueError(f"Expected a list for ArrayType, got {type(value)}")
-        return [parse_value(v, field_type.elementType) for v in value]
-    elif isinstance(field_type, MapType):
-        # Handle MapType - new support
-        if not isinstance(value, dict):
-            raise ValueError(f"Expected a dictionary for MapType, got {type(value)}")
-        return {
-            parse_value(k, field_type.keyType): parse_value(v, field_type.valueType)
-            for k, v in value.items()
-        }
-    # Handle primitive types with more robust error handling and type conversion
-    try:
-        if isinstance(field_type, StringType):
-            # Don't convert None to "None" string
-            return str(value) if value is not None else None
-        elif isinstance(field_type, (IntegerType, LongType)):
-            # Convert numeric strings and floats to integers
-            if isinstance(value, str) and value.strip():
-                # Handle numeric strings
-                if "." in value:
-                    return int(float(value))
-                return int(value)
-            elif isinstance(value, (int, float)):
-                return int(value)
-            raise ValueError(f"Cannot convert {value} to integer")
-        elif isinstance(field_type, FloatType) or isinstance(field_type, DoubleType):
-            # New support for floating point types
-            if isinstance(value, str) and value.strip():
-                return float(value)
-            return float(value)
-        elif isinstance(field_type, DecimalType):
-            # New support for Decimal type
-            from decimal import Decimal
-
-            if isinstance(value, str) and value.strip():
-                return Decimal(value)
-            return Decimal(str(value))
-        elif isinstance(field_type, BooleanType):
-            # Enhanced boolean conversion
-            if isinstance(value, str):
-                lowered = value.lower()
-                if lowered in ("true", "t", "yes", "y", "1"):
-                    return True
-                elif lowered in ("false", "f", "no", "n", "0"):
-                    return False
-            return bool(value)
-        elif isinstance(field_type, DateType):
-            # New support for DateType
-            if isinstance(value, str):
-                # Try multiple date formats
-                for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%d-%m-%Y", "%Y/%m/%d"):
-                    try:
-                        return datetime.strptime(value, fmt).date()
-                    except ValueError:
-                        continue
-                # ISO format as fallback
-                return datetime.fromisoformat(value).date()
-            elif isinstance(value, datetime):
-                return value.date()
-            raise ValueError(f"Cannot convert {value} to date")
-        elif isinstance(field_type, TimestampType):
-            # Enhanced timestamp handling
-            if isinstance(value, str):
-                # Handle multiple timestamp formats including Z and timezone offsets
-                if value.endswith("Z"):
-                    value = value.replace("Z", "+00:00")
-                try:
-                    return datetime.fromisoformat(value)
-                except ValueError:
-                    # Try additional formats if ISO format fails
-                    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S"):
-                        try:
-                            return datetime.strptime(value, fmt)
-                        except ValueError:
-                            continue
-            elif isinstance(value, (int, float)):
-                # Handle Unix timestamps
-                return datetime.fromtimestamp(value)
-            elif isinstance(value, datetime):
-                return value
-            raise ValueError(f"Cannot convert {value} to timestamp")
-        else:
-            # Check for custom UDT handling
-            if hasattr(field_type, "fromJson"):
-                # Support for User Defined Types that implement fromJson
-                return field_type.fromJson(value)
-            raise TypeError(f"Unsupported field type: {field_type}")
-    except (ValueError, TypeError) as e:
-        # Add context to the error
-        raise ValueError(
-            f"Error converting '{value}' ({type(value)}) to {field_type}: {str(e)}"
-        )
-
-
 class LakeflowConnectTester:
-    def __init__(self, init_options: dict):
+    def __init__(
+        self, init_options: dict, table_configs: Dict[str, Dict[str, Any]] = {}
+    ):
         self._init_options = init_options
+        # Per-table configuration passed as table_options into connector methods.
+        # Keys are table names, values are dicts of options for that table.
+        self._table_configs: Dict[str, Dict[str, Any]] = table_configs
         self.test_results: List[TestResult] = []
 
     def run_all_tests(self) -> TestReport:
@@ -337,7 +216,9 @@ class LakeflowConnectTester:
 
         for table_name in tables:
             try:
-                schema = self.connector.get_table_schema(table_name)
+                schema = self.connector.get_table_schema(
+                    table_name, self._get_table_options(table_name)
+                )
 
                 # Validate schema
                 if not isinstance(schema, StructType):
@@ -460,7 +341,9 @@ class LakeflowConnectTester:
 
         for table_name in tables:
             try:
-                metadata = self.connector.read_table_metadata(table_name)
+                metadata = self.connector.read_table_metadata(
+                    table_name, self._get_table_options(table_name)
+                )
 
                 # Validate metadata
                 if not isinstance(metadata, dict):
@@ -493,7 +376,9 @@ class LakeflowConnectTester:
                     continue
 
                 # Validate primary_key and cursor_field exist in schema if required
-                schema = self.connector.get_table_schema(table_name)
+                schema = self.connector.get_table_schema(
+                    table_name, self._get_table_options(table_name)
+                )
 
                 if self._should_validate_primary_key(
                     metadata
@@ -617,7 +502,9 @@ class LakeflowConnectTester:
 
         for table_name in tables:
             try:
-                result = self.connector.read_table(table_name, {})
+                result = self.connector.read_table(
+                    table_name, {}, self._get_table_options(table_name)
+                )
 
                 # Validate return type is tuple
                 if not isinstance(result, tuple) or len(result) != 2:
@@ -691,7 +578,10 @@ class LakeflowConnectTester:
                     continue
 
                 try:
-                    schema = self.connector.get_table_schema(table_name)
+                    # Pass table_options to get_table_schema to match the LakeflowConnect interface
+                    schema = self.connector.get_table_schema(
+                        table_name, self._get_table_options(table_name)
+                    )
                     for record in sample_records:
                         parse_value(record, schema)
                 except Exception as parse_e:
@@ -1028,10 +918,14 @@ class LakeflowConnectTester:
         for test_table in insertable_tables:
             try:
                 # First, check if the table supports incremental ingestion
-                metadata = self.connector.read_table_metadata(test_table)
+                metadata = self.connector.read_table_metadata(
+                    test_table, self._get_table_options(test_table)
+                )
 
                 # Get initial state for incremental read
-                initial_result = self.connector.read_table(test_table, {})
+                initial_result = self.connector.read_table(
+                    test_table, {}, self._get_table_options(test_table)
+                )
                 if not isinstance(initial_result, tuple) or len(initial_result) != 2:
                     failed_tables.append(
                         {
@@ -1074,7 +968,7 @@ class LakeflowConnectTester:
 
                 # Perform read after write
                 after_write_result = self.connector.read_table(
-                    test_table, initial_offset
+                    test_table, initial_offset, self._get_table_options(test_table)
                 )
                 if (
                     not isinstance(after_write_result, tuple)
@@ -1245,6 +1139,13 @@ class LakeflowConnectTester:
     def _add_result(self, result: TestResult):
         """Add a test result to the collection"""
         self.test_results.append(result)
+
+    def _get_table_options(self, table_name: str) -> Dict[str, Any]:
+        """
+        Helper to fetch table_options for a given table.
+        Returns an empty dict if no specific config is provided.
+        """
+        return self._table_configs.get(table_name, {})
 
     def _generate_report(self) -> TestReport:
         """Generate a comprehensive test report"""
