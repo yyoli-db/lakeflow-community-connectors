@@ -92,6 +92,12 @@ Implement the Python connector for **{{source_name}}** that conforms exactly to 
 - Do not add an extra main function - only implement the defined functions within the LakeflowConnect class. 
 - The functions `get_table_schema`, `read_table_metadata`, and `read_table` accept a dictionary argument that may contain additional parameters for customizing how a particular table is read. Using these extra parameters is optional.
 - Do not include parameters and options required by individual tables in the connection settings; instead, assume these will be provided through the table options.
+- Do not convert the JSON into dictionary based on the `get_table_schema` in `read_table`.
+- If a data source provides both a list API and a get API for the same object, always use the list API as the connector is expected to produce a table of objects. Only expand entries by calling the get API when the user explicitly requests this behavior and schema needs to match the read behavior.
+- Some objects exist under a parent object, treat the parent object’s identifier(s) as required parameters when listing the child objects. If the user wants these parent parameters to be optional, the correct pattern is: 
+  - list the parent objects
+  - for each parent object, list the child objects
+  - combine the results into a single output table with the parent object identifier as the extra field.
 - Refer to `example/example.py` or other connectors under `connector_sources` as examples
 
 ---
@@ -120,7 +126,7 @@ TODO: UPDATE THIS.
 - This step is more interactive. Based on testing 
 results, we need to make various adjustments
 - For external users, please remove the `dev_config.json` after this step.
-
+- Avoid mocking data in tests. Config files will be supplied to enable connections to an actual instance.
 ---
 
 ## Step 5: Create a Public Connector Documentation
@@ -135,3 +141,4 @@ Produce a Markdown file based on the standard template `community_connector_doc_
 - Please use the code implementation as the source of truth.
 - Use the source API documentation to cover anything missing.
 - Always include a section about how to configure the parameters needed to connect to the source system.
+- AVOID mentioning internal implementation terms such as function or argument names from the `LakeflowConnect`.
