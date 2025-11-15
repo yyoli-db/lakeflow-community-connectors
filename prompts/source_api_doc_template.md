@@ -9,6 +9,7 @@
 ## **Object List**
 - Describe the objects that can be retrieved from the source system.
 - Provide a list of all objects or tables accessible.
+- If an object is layered under another object, please describe that clearly.
 - Indicate whether the object list is static or retrievable using an API call.
 - If the object list is static, present the complete list of objects.
 - If retrievable via an API, describe the endpoint for obtaining object names and include an example API request.
@@ -43,6 +44,7 @@
 - Provide guidance on how to pull deleted records, either marked as a special field or from a completely different API endpoint.
 - Include example API requests and responses for data retrieval.
 - Compare different API options for reading the same data (if applicable).
+- Include the extra parameters needed to read the table.
 
 
 ## **Field Type Mapping**

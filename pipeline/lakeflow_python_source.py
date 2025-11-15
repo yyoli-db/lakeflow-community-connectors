@@ -5,6 +5,7 @@ from pyspark.sql.datasource import (
     DataSourceReader,
 )
 from typing import Iterator
+from sources.interface.lakeflow_connect import LakeflowConnect
 
 
 METADATA_TABLE = "_lakeflow_metadata"
