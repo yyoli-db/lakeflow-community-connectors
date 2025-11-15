@@ -1,18 +1,10 @@
 import pytest
-import json
 from pathlib import Path
 
-# Import test suite and connector
-import tests.test_suite as test_suite
+from tests import test_suite
 from tests.test_suite import LakeflowConnectTester
+from tests.test_utils import load_config
 from sources.example.example import LakeflowConnect
-
-
-def load_config():
-    """Load configuration from dev_config.json"""
-    config_path = Path(__file__).parent.parent / "configs" / "dev_config.json"
-    with open(config_path, "r") as f:
-        return json.load(f)
 
 
 def test_example_connector():
@@ -22,10 +14,15 @@ def test_example_connector():
     test_suite.LakeflowConnect = LakeflowConnect
 
     # Load configuration
-    config = load_config()
+    parent_dir = Path(__file__).parent.parent
+    config_path = parent_dir / "configs" / "dev_config.json"
+    table_config_path = parent_dir / "configs" / "dev_table_config.json"
+
+    config = load_config(config_path)
+    table_config = load_config(table_config_path)
 
     # Create tester with the config
-    tester = LakeflowConnectTester(config)
+    tester = LakeflowConnectTester(config, table_config)
 
     # Run all tests
     report = tester.run_all_tests()

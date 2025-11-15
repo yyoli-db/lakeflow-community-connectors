@@ -90,6 +90,7 @@ Implement the Python connector for **{{source_name}}** that conforms exactly to 
 - In logic of processing records, if a StructType field is absent in the response, assign None as the default value instead of an empty dictionary {}.
 - Avoid creating mock objects in the implementation.
 - Do not add an extra main function - only implement the defined functions within the LakeflowConnect class. 
+- The functions `get_table_schema`, `read_table_metadata`, and `read_table` accept a dictionary argument that may contain additional parameters for customizing how a particular table is read. Using these extra parameters is optional.
 - Refer to `example/example.py` or other connectors under `connector_sources` as examples
 
 ---

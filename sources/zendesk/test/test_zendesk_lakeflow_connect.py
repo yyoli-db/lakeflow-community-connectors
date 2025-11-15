@@ -1,18 +1,10 @@
 import pytest
-import json
 from pathlib import Path
 
-# Import test suite and connector
-import tests.test_suite as test_suite
+from tests import test_suite
 from tests.test_suite import LakeflowConnectTester
+from tests.test_utils import load_config
 from sources.zendesk.zendesk import LakeflowConnect
-
-
-def load_config():
-    """Load configuration from dev_config.json"""
-    config_path = Path(__file__).parent.parent / "configs" / "dev_config.json"
-    with open(config_path, "r") as f:
-        return json.load(f)
 
 
 def test_zendesk_connector():
@@ -22,7 +14,10 @@ def test_zendesk_connector():
     test_suite.LakeflowConnect = LakeflowConnect
 
     # Load configuration
-    config = load_config()
+    parent_dir = Path(__file__).parent.parent
+    config_path = parent_dir / "configs" / "dev_config.json"
+
+    config = load_config(config_path)
 
     # Create tester with the config
     tester = LakeflowConnectTester(config)
