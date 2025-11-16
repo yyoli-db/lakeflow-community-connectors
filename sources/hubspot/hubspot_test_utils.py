@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Dict, List, Tuple
 
 
-# TODO: Refactor this utils to improve the interface in the future.
+# TODO: Refactor this utils to improve the interface in the future and do not add more tests using this utils.
 class LakeflowConnectTestUtils:
     """
     Test utilities for HubSpot connector.
