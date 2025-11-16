@@ -277,8 +277,6 @@ Check pipeline logs for detailed error information and stack traces.
 
 Potential future improvements:
 - **Write Support**: Add write operations for creating/updating Stripe objects
-- **Nested Objects**: Support for related object expansion (e.g., expanding customer in charges)
-- **Webhooks**: Real-time event processing via Stripe webhooks
 - **Additional Objects**: Support for more Stripe objects like:
   - Tax rates and tax transactions
   - Connect accounts and transfers

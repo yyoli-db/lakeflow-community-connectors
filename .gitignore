@@ -2,13 +2,6 @@
 .idea/
 .vscode/
 
-
-# Virtual environments
-venv/
-env/
-ENV/
-.venv
-
 # Testing
 .pytest_cache/
 .coverage
