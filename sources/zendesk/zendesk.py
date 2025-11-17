@@ -18,6 +18,18 @@ class LakeflowConnect:
             "Content-Type": "application/json",
         }
 
+    def list_tables(self) -> list[str]:
+        return [
+            "tickets",
+            "organizations",
+            "articles",
+            "brands",
+            "groups",
+            "ticket_comments",
+            "topics",
+            "users",
+        ]
+
     def get_table_schema(self, table_name: str) -> StructType:
         """
         Fetch the schema of a table.
