@@ -97,7 +97,8 @@ class LakeflowConnectTester:
             try:
                 self.connector_test_utils = LakeflowConnectTestUtils(self._init_options)
             except Exception:
-                self.connector_test_utils = None
+                raise Exception("Connector test utils not implemented")
+                # self.connector_test_utils = None
 
             if self.connector is None:
                 self._add_result(
