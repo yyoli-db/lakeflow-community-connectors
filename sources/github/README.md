@@ -49,6 +49,9 @@ A Unity Catalog connection for this connector can be created in two ways via the
 
 You can also create the connection via the standard Unity Catalog API by supplying the same connection options (`token`, optional `base_url`) in the connection configuration.
 
+When defining the connection, set the `externalOptionsAllowList` to include any table-level options you plan to use. For the GitHub connector, this typically includes:
+`owner,repo,state,start_date,per_page,max_pages_per_batch,lookback_seconds,org,pull_number`.
+
 ## Supported Objects
 
 The GitHub connector exposes a **static list** of tables:

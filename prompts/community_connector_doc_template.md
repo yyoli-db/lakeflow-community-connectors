@@ -20,6 +20,7 @@ To configure the connector, provide the following parameters in your connector o
 A Unity Catalog connection for this connector can be created in two ways via the UI:
 1. Follow the Lakeflow Community Connector UI flow from the "Add Data" page
 2. Navigate to the Unity Catalog UI and create a "Lakeflow Community Connector" connection
+3. <Identify any extra table-specific options that can be configured (especially any that are required). List these option names as a comma-separated string in the `externalOptionsAllowList`. Do this for the specific source.>
 
 The connection can also be created using the standard Unity Catalog API.
 
