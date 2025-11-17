@@ -7,8 +7,14 @@
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Iterator
+from typing import (
+    Any,
+    Dict,
+    Iterator,
+    List,
+)
 
+from locale import dcgettext
 from pyspark.sql import Row
 from pyspark.sql.datasource import DataSource, DataSourceReader, SimpleDataSourceStreamReader
 from pyspark.sql.types import *
@@ -175,7 +181,7 @@ def register_lakeflow_source(spark):
                 "Content-Type": "application/json",
             }
 
-        def list_tables(self) -> list[str]:
+        def list_tables(self) -> List[str]:
             return [
                 "tickets",
                 "organizations",
@@ -187,7 +193,9 @@ def register_lakeflow_source(spark):
                 "users",
             ]
 
-        def get_table_schema(self, table_name: str) -> StructType:
+        def get_table_schema(
+            self, table_name: str, table_options: Dict[str, str]
+        ) -> StructType:
             """
             Fetch the schema of a table.
             """
@@ -416,7 +424,9 @@ def register_lakeflow_source(spark):
 
             return schemas[table_name]
 
-        def read_table_metadata(self, table_name: str) -> dict:
+        def read_table_metadata(
+            self, table_name: str, table_options: Dict[str, str]
+        ) -> dict:
             """
             Fetch the metadata of a table.
             """
@@ -436,7 +446,9 @@ def register_lakeflow_source(spark):
 
             return metadata[table_name]
 
-        def read_table(self, table_name: str, start_offset: dict):
+        def read_table(
+            self, table_name: str, start_offset: dict, table_options: Dict[str, str]
+        ) -> (Iterator[dict], dict):
             # Map table names to their API endpoints and response keys
             api_config = {
                 "tickets": {

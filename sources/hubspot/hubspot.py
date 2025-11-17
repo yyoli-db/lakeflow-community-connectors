@@ -19,77 +19,77 @@ class LakeflowConnect:
         self._schema_cache = {}
         # Cache for table metadata
         self._metadata_cache = {}
-        
+
         # Centralized object metadata configuration
         self._object_config = {
             "contacts": {
                 "primary_key": "id",
                 "cursor_field": "updatedAt",
                 "cursor_property_field": "lastmodifieddate",
-                "associations": ["companies"]
+                "associations": ["companies"],
             },
             "companies": {
-                "primary_key": "id", 
+                "primary_key": "id",
                 "cursor_field": "updatedAt",
                 "cursor_property_field": "hs_lastmodifieddate",
-                "associations": ["contacts"]
+                "associations": ["contacts"],
             },
             "deals": {
                 "primary_key": "id",
-                "cursor_field": "updatedAt", 
+                "cursor_field": "updatedAt",
                 "cursor_property_field": "hs_lastmodifieddate",
-                "associations": ["contacts", "companies", "tickets"]
+                "associations": ["contacts", "companies", "tickets"],
             },
             "tickets": {
                 "primary_key": "id",
                 "cursor_field": "updatedAt",
-                "cursor_property_field": "hs_lastmodifieddate", 
-                "associations": ["contacts", "companies", "deals"]
+                "cursor_property_field": "hs_lastmodifieddate",
+                "associations": ["contacts", "companies", "deals"],
             },
             "calls": {
                 "primary_key": "id",
                 "cursor_field": "updatedAt",
                 "cursor_property_field": "hs_lastmodifieddate",
-                "associations": ["contacts", "companies", "deals", "tickets"]
+                "associations": ["contacts", "companies", "deals", "tickets"],
             },
             "emails": {
                 "primary_key": "id",
-                "cursor_field": "updatedAt", 
+                "cursor_field": "updatedAt",
                 "cursor_property_field": "hs_lastmodifieddate",
-                "associations": ["contacts", "companies", "deals", "tickets"]
+                "associations": ["contacts", "companies", "deals", "tickets"],
             },
             "meetings": {
                 "primary_key": "id",
                 "cursor_field": "updatedAt",
                 "cursor_property_field": "hs_lastmodifieddate",
-                "associations": ["contacts", "companies", "deals", "tickets"] 
+                "associations": ["contacts", "companies", "deals", "tickets"],
             },
             "tasks": {
                 "primary_key": "id",
                 "cursor_field": "updatedAt",
                 "cursor_property_field": "hs_lastmodifieddate",
-                "associations": ["contacts", "companies", "deals", "tickets"]
+                "associations": ["contacts", "companies", "deals", "tickets"],
             },
             "notes": {
-                "primary_key": "id", 
+                "primary_key": "id",
                 "cursor_field": "updatedAt",
                 "cursor_property_field": "hs_lastmodifieddate",
-                "associations": ["contacts", "companies", "deals", "tickets"]
+                "associations": ["contacts", "companies", "deals", "tickets"],
             },
             "deal_split": {
                 "primary_key": "id",
                 "cursor_field": "updatedAt",
                 "cursor_property_field": "hs_lastmodifieddate",
-                "associations": []
-            }
+                "associations": [],
+            },
         }
-        
+
         # Default config for custom objects
         self._default_object_config = {
             "primary_key": "id",
             "cursor_field": "updatedAt",
             "cursor_property_field": "hs_lastmodifieddate",
-            "associations": []
+            "associations": [],
         }
 
     def list_tables(self) -> list[str]:
@@ -97,15 +97,25 @@ class LakeflowConnect:
         List available tables including standard CRM objects and custom objects.
         """
         # Standard HubSpot CRM objects
-        standard_tables = ["contacts", "companies", "deals", "tickets", "calls", "emails", "meetings", "tasks", "notes"]
-        
+        standard_tables = [
+            "contacts",
+            "companies",
+            "deals",
+            "tickets",
+            "calls",
+            "emails",
+            "meetings",
+            "tasks",
+            "notes",
+        ]
+
         # Add dynamic discovery of custom objects
         try:
             custom_objects = self._discover_custom_objects()
             standard_tables.extend(custom_objects)
         except Exception as e:
             print(f"Warning: Could not discover custom objects: {e}")
-        
+
         return standard_tables
 
     def _discover_custom_objects(self) -> List[str]:
@@ -115,22 +125,22 @@ class LakeflowConnect:
         try:
             url = f"{self.base_url}/crm/v3/schemas"
             resp = requests.get(url, headers=self.auth_header)
-            
+
             if resp.status_code != 200:
                 return []
-            
+
             data = resp.json()
             custom_objects = []
-            
+
             # Extract custom object names
             for schema in data.get("results", []):
                 object_type = schema.get("objectTypeId", "")
                 name = schema.get("name", "")
-                
+
                 # Skip standard objects, only include custom ones
                 if object_type not in ["0-1", "0-2", "0-3", "0-5"] and name:
                     custom_objects.append(name.lower())
-            
+
             return custom_objects
         except Exception as e:
             print(f"Error discovering custom objects: {e}")
@@ -140,7 +150,9 @@ class LakeflowConnect:
         """Get configuration for a specific object type"""
         return self._object_config.get(table_name, self._default_object_config)
 
-    def get_table_schema(self, table_name: str) -> StructType:
+    def get_table_schema(
+        self, table_name: str, table_options: Dict[str, str]
+    ) -> StructType:
         """
         Fetch the schema of a table.
 
@@ -153,16 +165,18 @@ class LakeflowConnect:
         # Check cache first
         if table_name in self._schema_cache:
             return self._schema_cache[table_name]
-        
+
         # Discover schema via API
         schema = self._discover_table_schema(table_name)
-        
+
         # Cache the result
         self._schema_cache[table_name] = schema
-        
+
         return schema
 
-    def read_table_metadata(self, table_name: str) -> dict:
+    def read_table_metadata(
+        self, table_name: str, table_options: Dict[str, str]
+    ) -> dict:
         """
         Fetch the metadata of a table.
 
@@ -181,45 +195,45 @@ class LakeflowConnect:
         # Check cache first
         if table_name in self._metadata_cache:
             return self._metadata_cache[table_name]
-        
+
         # Get metadata from object configuration
         metadata = self._get_table_metadata(table_name)
-        
+
         # Cache the result
         self._metadata_cache[table_name] = metadata
-        
+
         return metadata
 
     def _discover_table_schema(self, table_name: str) -> StructType:
         """
         Discover table schema by calling HubSpot Properties API.
-        
+
         Args:
             table_name: Name of the table/object to discover schema for
-            
+
         Returns:
             StructType representing the table schema
         """
         # All CRM objects follow the same schema pattern
         return self._discover_crm_object_schema(table_name)
-    
+
     def _get_table_metadata(self, table_name: str) -> dict:
         """
         Get metadata for a table based on object configuration.
         """
         config = self._get_object_config(table_name)
-        
+
         # Get property names and cursor property field for API calls
         properties = self._get_object_properties(table_name)
         property_names = [prop["name"] for prop in properties]
-        
+
         return {
             "primary_key": config["primary_key"],
             "cursor_field": config["cursor_field"],
             "cursor_property_field": config["cursor_property_field"],
             "property_names": property_names,
             "associations": config.get("associations", []),
-            "ingestion_type": "cdc"
+            "ingestion_type": "cdc",
         }
 
     def _discover_crm_object_schema(self, table_name: str) -> StructType:
@@ -230,7 +244,7 @@ class LakeflowConnect:
         # Get object configuration and properties
         config = self._get_object_config(table_name)
         properties = self._get_object_properties(table_name)
-        
+
         # Build base schema fields (these are always present for CRM objects)
         base_fields = [
             StructField("id", StringType(), True),
@@ -238,28 +252,30 @@ class LakeflowConnect:
             StructField("updatedAt", StringType(), True),
             StructField("archived", BooleanType(), True),
         ]
-        
+
         # Add association fields based on configuration
         for association in config["associations"]:
             base_fields.append(StructField(association, ArrayType(StringType()), True))
-        
+
         # Build dynamic properties schema based on API response
         properties_fields = []
-        
+
         if isinstance(properties, list):
             for prop in properties:
                 prop_name = prop.get("name", "")
                 prop_type = prop.get("type", "string")
-                
+
                 # Map HubSpot property types to Spark types
                 spark_type = self._map_hubspot_type_to_spark(prop_type)
-                properties_fields.append(StructField(f"properties_{prop_name}", spark_type, True))
-        
+                properties_fields.append(
+                    StructField(f"properties_{prop_name}", spark_type, True)
+                )
+
         # Combine base fields with flattened properties
         all_fields = base_fields + properties_fields
-        
+
         schema = StructType(all_fields)
-        
+
         return schema
 
     def _get_associations_for_object(self, table_name: str) -> List[str]:
@@ -299,83 +315,102 @@ class LakeflowConnect:
             "phone_number": StringType(),
             "object_coordinates": StringType(),
         }
-        
+
         return type_mapping.get(hubspot_type.lower(), StringType())
 
-    def read_table(self, table_name: str, start_offset: dict = None):
+    def read_table(
+        self, table_name: str, start_offset: dict, table_options: Dict[str, str]
+    ) -> (Iterator[dict], dict):
         """
         Read data from HubSpot API using unified approach.
-        
+
         Args:
             table_name: Name of the table to read
             start_offset: Dictionary containing cursor information for incremental reads
-            
+
         Returns:
             Tuple of (records, new_offset)
         """
         # Determine if this is an incremental read
-        is_incremental = start_offset is not None and start_offset.get("updatedAt") is not None
-        
+        is_incremental = (
+            start_offset is not None and start_offset.get("updatedAt") is not None
+        )
+
         if is_incremental:
             return self._read_data(table_name, start_offset, incremental=True)
         else:
             return self._read_data(table_name, None, incremental=False)
 
-    def _read_data(self, table_name: str, start_offset: dict = None, incremental: bool = False):
+    def _read_data(
+        self, table_name: str, start_offset: dict = None, incremental: bool = False
+    ):
         """Unified method to read data from HubSpot API"""
-        
+
         # Get discovered properties and object configuration
         metadata = self.read_table_metadata(table_name)
         property_names = metadata.get("property_names", [])
         cursor_property_field = metadata.get("cursor_property_field")
         associations = metadata.get("associations", [])
-        
+
         all_records = []
         after = None
         latest_updated = start_offset.get("updatedAt") if start_offset else None
-        
+
         while True:
             if incremental:
                 # Use search API for incremental reads
                 records, after, updated_time = self._fetch_incremental_batch(
-                    table_name, property_names, cursor_property_field, start_offset, after
+                    table_name,
+                    property_names,
+                    cursor_property_field,
+                    start_offset,
+                    after,
                 )
-                if updated_time and (not latest_updated or updated_time > latest_updated):
+                if updated_time and (
+                    not latest_updated or updated_time > latest_updated
+                ):
                     latest_updated = updated_time
             else:
                 # Use objects API for full refresh
                 records, after = self._fetch_full_refresh_batch(
                     table_name, property_names, associations, after
                 )
-                
+
             if not records:
                 break
-                
+
             # Transform records
             transformed_records = self._transform_records(records, table_name)
             all_records.extend(transformed_records)
-            
+
             # Update latest timestamp for full refresh
             if not incremental:
                 for record in transformed_records:
                     updated_at = record.get("updatedAt")
-                    if updated_at and (not latest_updated or updated_at > latest_updated):
+                    if updated_at and (
+                        not latest_updated or updated_at > latest_updated
+                    ):
                         latest_updated = updated_at
-            
+
             if not after:
                 break
-                
+
             # Rate limiting
             time.sleep(0.1)
 
         offset = {"updatedAt": latest_updated} if latest_updated else {}
         return all_records, offset
 
-    def _fetch_full_refresh_batch(self, table_name: str, property_names: List[str], 
-                                associations: List[str], after: str = None):
+    def _fetch_full_refresh_batch(
+        self,
+        table_name: str,
+        property_names: List[str],
+        associations: List[str],
+        after: str = None,
+    ):
         """Fetch a batch of records using full refresh API"""
         url = f"{self.base_url}/crm/v3/objects/{table_name}?limit=100&archived=false"
-        
+
         if after:
             url += f"&after={after}"
         if property_names:
@@ -385,62 +420,79 @@ class LakeflowConnect:
 
         resp = requests.get(url, headers=self.auth_header)
         if resp.status_code != 200:
-            raise Exception(f"HubSpot API error for {table_name}: {resp.status_code} {resp.text}")
+            raise Exception(
+                f"HubSpot API error for {table_name}: {resp.status_code} {resp.text}"
+            )
 
         data = resp.json()
         records = data.get("results", [])
         next_after = data.get("paging", {}).get("next", {}).get("after")
-        
+
         return records, next_after
 
-    def _fetch_incremental_batch(self, table_name: str, property_names: List[str], 
-                                cursor_property_field: str, start_offset: dict, after: str = None):
+    def _fetch_incremental_batch(
+        self,
+        table_name: str,
+        property_names: List[str],
+        cursor_property_field: str,
+        start_offset: dict,
+        after: str = None,
+    ):
         """Fetch a batch of records using incremental search API"""
         last_updated = start_offset.get("updatedAt", "1970-01-01T00:00:00.000Z")
-        
+
         # Convert to milliseconds for HubSpot
         try:
-            last_updated_ms = int(datetime.fromisoformat(
-                last_updated.replace('Z', '+00:00')
-            ).timestamp() * 1000)
+            last_updated_ms = int(
+                datetime.fromisoformat(last_updated.replace("Z", "+00:00")).timestamp()
+                * 1000
+            )
         except:
             last_updated_ms = 0
 
         search_body = {
-            "filterGroups": [{
-                "filters": [{
-                    "propertyName": cursor_property_field,
-                    "operator": "GTE",
-                    "value": str(last_updated_ms)
-                }]
-            }],
-            "sorts": [{"propertyName": cursor_property_field, "direction": "ASCENDING"}],
+            "filterGroups": [
+                {
+                    "filters": [
+                        {
+                            "propertyName": cursor_property_field,
+                            "operator": "GTE",
+                            "value": str(last_updated_ms),
+                        }
+                    ]
+                }
+            ],
+            "sorts": [
+                {"propertyName": cursor_property_field, "direction": "ASCENDING"}
+            ],
             "limit": 100,
-            "properties": property_names or []
+            "properties": property_names or [],
         }
-        
+
         if after:
             search_body["after"] = after
 
         url = f"{self.base_url}/crm/v3/objects/{table_name}/search"
         resp = requests.post(url, headers=self.auth_header, json=search_body)
-        
+
         if resp.status_code != 200:
-            raise Exception(f"HubSpot API error for {table_name}: {resp.status_code} {resp.text}")
+            raise Exception(
+                f"HubSpot API error for {table_name}: {resp.status_code} {resp.text}"
+            )
 
         data = resp.json()
         records = data.get("results", [])
         next_after = data.get("paging", {}).get("next", {}).get("after")
-        
+
         # Get latest update time from this batch
         latest_in_batch = last_updated
         for record in records:
             updated_at = record.get("updatedAt")
             if updated_at and updated_at > latest_in_batch:
                 latest_in_batch = updated_at
-        
+
         return records, next_after, latest_in_batch
-        
+
     def _transform_records(self, records: List[Dict], table_name: str) -> List[Dict]:
         """Transform HubSpot records by flattening properties and associations"""
         return [self._transform_single_record(record, table_name) for record in records]
@@ -448,20 +500,20 @@ class LakeflowConnect:
     def _transform_single_record(self, record: Dict, table_name: str) -> Dict:
         """Transform a single HubSpot record"""
         transformed_record = {}
-        
+
         # Copy base fields
         for field in ["id", "createdAt", "updatedAt", "archived"]:
             if field in record:
                 transformed_record[field] = record[field]
-        
+
         # Handle associations
         transformed_record.update(self._extract_associations(record, table_name))
-        
+
         # Flatten properties with properties_ prefix
         properties = record.get("properties", {})
         for prop_name, prop_value in properties.items():
             transformed_record[f"properties_{prop_name}"] = prop_value
-        
+
         return transformed_record
 
     def _extract_associations(self, record: Dict, table_name: str) -> Dict:
@@ -470,18 +522,23 @@ class LakeflowConnect:
         config = self._get_object_config(table_name)
         expected_associations = config["associations"]
         result = {}
-        
+
         for association_type in expected_associations:
             association_list = []
             if association_type in associations_data:
                 assoc_data = associations_data[association_type]
                 if isinstance(assoc_data, dict) and "results" in assoc_data:
-                    association_list = [item.get("id", "") for item in assoc_data["results"]]
+                    association_list = [
+                        item.get("id", "") for item in assoc_data["results"]
+                    ]
                 elif isinstance(assoc_data, list):
-                    association_list = [str(item) if not isinstance(item, dict) else item.get("id", "") for item in assoc_data]
-            
+                    association_list = [
+                        str(item) if not isinstance(item, dict) else item.get("id", "")
+                        for item in assoc_data
+                    ]
+
             result[association_type] = association_list
-        
+
         return result
 
     def test_connection(self) -> dict:
@@ -489,13 +546,13 @@ class LakeflowConnect:
         try:
             url = f"{self.base_url}/crm/v3/objects/contacts?limit=1"
             resp = requests.get(url, headers=self.auth_header)
-            
+
             if resp.status_code == 200:
                 return {"status": "success", "message": "Connection successful"}
             else:
                 return {
-                    "status": "error", 
-                    "message": f"API error: {resp.status_code} {resp.text}"
+                    "status": "error",
+                    "message": f"API error: {resp.status_code} {resp.text}",
                 }
         except Exception as e:
             return {"status": "error", "message": f"Connection failed: {str(e)}"}

@@ -43,6 +43,7 @@
 - Provide guidance on how to pull deleted records, either marked as a special field or from a completely different API endpoint.
 - Include example API requests and responses for data retrieval.
 - Compare different API options for reading the same data (if applicable).
+- Include the extra parameters needed to read the table.
 
 
 ## **Field Type Mapping**

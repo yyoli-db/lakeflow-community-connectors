@@ -191,449 +191,481 @@ def register_lakeflow_source(spark):
                     "cursor_field": "created",
                     "ingestion_type": "cdc",
                     "endpoint": "customers",
-                    "supports_deleted": True
+                    "supports_deleted": True,
                 },
                 "charges": {
                     "primary_key": "id",
                     "cursor_field": "created",
                     "ingestion_type": "cdc",
                     "endpoint": "charges",
-                    "supports_deleted": False
+                    "supports_deleted": False,
                 },
                 "payment_intents": {
                     "primary_key": "id",
                     "cursor_field": "created",
                     "ingestion_type": "cdc",
                     "endpoint": "payment_intents",
-                    "supports_deleted": False
+                    "supports_deleted": False,
                 },
                 "subscriptions": {
                     "primary_key": "id",
                     "cursor_field": "created",
                     "ingestion_type": "cdc",
                     "endpoint": "subscriptions",
-                    "supports_deleted": False
+                    "supports_deleted": False,
                 },
                 "invoices": {
                     "primary_key": "id",
                     "cursor_field": "created",
                     "ingestion_type": "cdc",
                     "endpoint": "invoices",
-                    "supports_deleted": False
+                    "supports_deleted": False,
                 },
                 "products": {
                     "primary_key": "id",
                     "cursor_field": "created",
                     "ingestion_type": "cdc",
                     "endpoint": "products",
-                    "supports_deleted": True
+                    "supports_deleted": True,
                 },
                 "prices": {
                     "primary_key": "id",
                     "cursor_field": "created",
                     "ingestion_type": "cdc",
                     "endpoint": "prices",
-                    "supports_deleted": False
+                    "supports_deleted": False,
                 },
                 "refunds": {
                     "primary_key": "id",
                     "cursor_field": "created",
                     "ingestion_type": "cdc",
                     "endpoint": "refunds",
-                    "supports_deleted": False
+                    "supports_deleted": False,
                 },
                 "disputes": {
                     "primary_key": "id",
                     "cursor_field": "created",
                     "ingestion_type": "cdc",
                     "endpoint": "disputes",
-                    "supports_deleted": False
+                    "supports_deleted": False,
                 },
                 "payment_methods": {
                     "primary_key": "id",
                     "cursor_field": "created",
                     "ingestion_type": "cdc",
                     "endpoint": "payment_methods",
-                    "supports_deleted": False
+                    "supports_deleted": False,
                 },
                 "balance_transactions": {
                     "primary_key": "id",
                     "cursor_field": "created",
                     "ingestion_type": "cdc",
                     "endpoint": "balance_transactions",
-                    "supports_deleted": False
+                    "supports_deleted": False,
                 },
                 "payouts": {
                     "primary_key": "id",
                     "cursor_field": "created",
                     "ingestion_type": "cdc",
                     "endpoint": "payouts",
-                    "supports_deleted": False
+                    "supports_deleted": False,
                 },
                 "invoice_items": {
                     "primary_key": "id",
                     "cursor_field": "created",
                     "ingestion_type": "cdc",
                     "endpoint": "invoiceitems",
-                    "supports_deleted": False
+                    "supports_deleted": False,
                 },
                 "plans": {
                     "primary_key": "id",
                     "cursor_field": "created",
                     "ingestion_type": "cdc",
                     "endpoint": "plans",
-                    "supports_deleted": True
+                    "supports_deleted": True,
                 },
                 "events": {
                     "primary_key": "id",
                     "cursor_field": "created",
                     "ingestion_type": "cdc",
                     "endpoint": "events",
-                    "supports_deleted": False
+                    "supports_deleted": False,
                 },
                 "coupons": {
                     "primary_key": "id",
                     "cursor_field": "created",
                     "ingestion_type": "cdc",
                     "endpoint": "coupons",
-                    "supports_deleted": False
-                }
+                    "supports_deleted": False,
+                },
             }
 
             # Centralized schema configuration
             self._schema_config = {
-                "customers": StructType([
-                    StructField("id", StringType(), False),
-                    StructField("object", StringType(), True),
-                    StructField("created", LongType(), True),
-                    StructField("updated", LongType(), True),
-                    StructField("livemode", BooleanType(), True),
-                    StructField("email", StringType(), True),
-                    StructField("name", StringType(), True),
-                    StructField("phone", StringType(), True),
-                    StructField("description", StringType(), True),
-                    StructField("address_line1", StringType(), True),
-                    StructField("address_line2", StringType(), True),
-                    StructField("address_city", StringType(), True),
-                    StructField("address_state", StringType(), True),
-                    StructField("address_postal_code", StringType(), True),
-                    StructField("address_country", StringType(), True),
-                    StructField("shipping_name", StringType(), True),
-                    StructField("shipping_phone", StringType(), True),
-                    StructField("shipping_address_line1", StringType(), True),
-                    StructField("shipping_address_line2", StringType(), True),
-                    StructField("shipping_address_city", StringType(), True),
-                    StructField("shipping_address_state", StringType(), True),
-                    StructField("shipping_address_postal_code", StringType(), True),
-                    StructField("shipping_address_country", StringType(), True),
-                    StructField("balance", LongType(), True),
-                    StructField("currency", StringType(), True),
-                    StructField("delinquent", BooleanType(), True),
-                    StructField("preferred_locales", ArrayType(StringType()), True),
-                    StructField("invoice_settings", StringType(), True),
-                    StructField("tax_exempt", StringType(), True),
-                    StructField("default_source", StringType(), True),
-                    StructField("invoice_prefix", StringType(), True),
-                    StructField("metadata", StringType(), True),
-                    StructField("discount", StringType(), True),
-                    StructField("deleted", BooleanType(), True)
-                ]),
-                "charges": StructType([
-                    StructField("id", StringType(), False),
-                    StructField("object", StringType(), True),
-                    StructField("created", LongType(), True),
-                    StructField("livemode", BooleanType(), True),
-                    StructField("amount", LongType(), True),
-                    StructField("amount_captured", LongType(), True),
-                    StructField("amount_refunded", LongType(), True),
-                    StructField("currency", StringType(), True),
-                    StructField("status", StringType(), True),
-                    StructField("paid", BooleanType(), True),
-                    StructField("refunded", BooleanType(), True),
-                    StructField("captured", BooleanType(), True),
-                    StructField("disputed", BooleanType(), True),
-                    StructField("customer", StringType(), True),
-                    StructField("invoice", StringType(), True),
-                    StructField("payment_intent", StringType(), True),
-                    StructField("payment_method", StringType(), True),
-                    StructField("description", StringType(), True),
-                    StructField("receipt_email", StringType(), True),
-                    StructField("receipt_url", StringType(), True),
-                    StructField("statement_descriptor", StringType(), True),
-                    StructField("billing_details", StringType(), True),
-                    StructField("payment_method_details", StringType(), True),
-                    StructField("outcome", StringType(), True),
-                    StructField("metadata", StringType(), True),
-                    StructField("failure_code", StringType(), True),
-                    StructField("failure_message", StringType(), True),
-                ]),
-                "payment_intents": StructType([
-                    StructField("id", StringType(), False),
-                    StructField("object", StringType(), True),
-                    StructField("created", LongType(), True),
-                    StructField("livemode", BooleanType(), True),
-                    StructField("amount", LongType(), True),
-                    StructField("amount_capturable", LongType(), True),
-                    StructField("amount_received", LongType(), True),
-                    StructField("currency", StringType(), True),
-                    StructField("status", StringType(), True),
-                    StructField("canceled_at", LongType(), True),
-                    StructField("cancellation_reason", StringType(), True),
-                    StructField("customer", StringType(), True),
-                    StructField("invoice", StringType(), True),
-                    StructField("payment_method", StringType(), True),
-                    StructField("description", StringType(), True),
-                    StructField("receipt_email", StringType(), True),
-                    StructField("statement_descriptor", StringType(), True),
-                    StructField("capture_method", StringType(), True),
-                    StructField("confirmation_method", StringType(), True),
-                    StructField("charges", StringType(), True),
-                    StructField("payment_method_options", StringType(), True),
-                    StructField("shipping", StringType(), True),
-                    StructField("metadata", StringType(), True),
-                    StructField("latest_charge", StringType(), True),
-                ]),
-                "subscriptions": StructType([
-                    StructField("id", StringType(), False),
-                    StructField("object", StringType(), True),
-                    StructField("created", LongType(), True),
-                    StructField("livemode", BooleanType(), True),
-                    StructField("status", StringType(), True),
-                    StructField("current_period_start", LongType(), True),
-                    StructField("current_period_end", LongType(), True),
-                    StructField("cancel_at", LongType(), True),
-                    StructField("canceled_at", LongType(), True),
-                    StructField("ended_at", LongType(), True),
-                    StructField("trial_start", LongType(), True),
-                    StructField("trial_end", LongType(), True),
-                    StructField("customer", StringType(), True),
-                    StructField("default_payment_method", StringType(), True),
-                    StructField("latest_invoice", StringType(), True),
-                    StructField("billing_cycle_anchor", LongType(), True),
-                    StructField("collection_method", StringType(), True),
-                    StructField("days_until_due", LongType(), True),
-                    StructField("items", StringType(), True),
-                    StructField("metadata", StringType(), True),
-                    StructField("discount", StringType(), True),
-                    StructField("cancel_at_period_end", BooleanType(), True),
-                ]),
-                "invoices": StructType([
-                    StructField("id", StringType(), False),
-                    StructField("object", StringType(), True),
-                    StructField("created", LongType(), True),
-                    StructField("livemode", BooleanType(), True),
-                    StructField("status", StringType(), True),
-                    StructField("paid", BooleanType(), True),
-                    StructField("amount_due", LongType(), True),
-                    StructField("amount_paid", LongType(), True),
-                    StructField("amount_remaining", LongType(), True),
-                    StructField("total", LongType(), True),
-                    StructField("subtotal", LongType(), True),
-                    StructField("tax", LongType(), True),
-                    StructField("currency", StringType(), True),
-                    StructField("customer", StringType(), True),
-                    StructField("subscription", StringType(), True),
-                    StructField("charge", StringType(), True),
-                    StructField("payment_intent", StringType(), True),
-                    StructField("billing_reason", StringType(), True),
-                    StructField("collection_method", StringType(), True),
-                    StructField("customer_email", StringType(), True),
-                    StructField("customer_name", StringType(), True),
-                    StructField("due_date", LongType(), True),
-                    StructField("period_start", LongType(), True),
-                    StructField("period_end", LongType(), True),
-                    StructField("number", StringType(), True),
-                    StructField("hosted_invoice_url", StringType(), True),
-                    StructField("invoice_pdf", StringType(), True),
-                    StructField("lines", StringType(), True),
-                    StructField("metadata", StringType(), True),
-                ]),
-                "products": StructType([
-                    StructField("id", StringType(), False),
-                    StructField("object", StringType(), True),
-                    StructField("created", LongType(), True),
-                    StructField("updated", LongType(), True),
-                    StructField("livemode", BooleanType(), True),
-                    StructField("name", StringType(), True),
-                    StructField("description", StringType(), True),
-                    StructField("active", BooleanType(), True),
-                    StructField("type", StringType(), True),
-                    StructField("unit_label", StringType(), True),
-                    StructField("url", StringType(), True),
-                    StructField("images", ArrayType(StringType()), True),
-                    StructField("metadata", StringType(), True),
-                    StructField("statement_descriptor", StringType(), True),
-                    StructField("tax_code", StringType(), True),
-                    StructField("shippable", BooleanType(), True),
-                    StructField("deleted", BooleanType(), True),
-                ]),
-                "prices": StructType([
-                    StructField("id", StringType(), False),
-                    StructField("object", StringType(), True),
-                    StructField("created", LongType(), True),
-                    StructField("livemode", BooleanType(), True),
-                    StructField("active", BooleanType(), True),
-                    StructField("currency", StringType(), True),
-                    StructField("unit_amount", LongType(), True),
-                    StructField("unit_amount_decimal", StringType(), True),
-                    StructField("product", StringType(), True),
-                    StructField("billing_scheme", StringType(), True),
-                    StructField("type", StringType(), True),
-                    StructField("recurring", StringType(), True),
-                    StructField("lookup_key", StringType(), True),
-                    StructField("nickname", StringType(), True),
-                    StructField("tax_behavior", StringType(), True),
-                    StructField("tiers", StringType(), True),
-                    StructField("tiers_mode", StringType(), True),
-                    StructField("metadata", StringType(), True),
-                ]),
-                "refunds": StructType([
-                    StructField("id", StringType(), False),
-                    StructField("object", StringType(), True),
-                    StructField("created", LongType(), True),
-                    StructField("livemode", BooleanType(), True),
-                    StructField("amount", LongType(), True),
-                    StructField("currency", StringType(), True),
-                    StructField("charge", StringType(), True),
-                    StructField("payment_intent", StringType(), True),
-                    StructField("status", StringType(), True),
-                    StructField("reason", StringType(), True),
-                    StructField("receipt_number", StringType(), True),
-                    StructField("metadata", StringType(), True),
-                    StructField("failure_reason", StringType(), True),
-                ]),
-                "disputes": StructType([
-                    StructField("id", StringType(), False),
-                    StructField("object", StringType(), True),
-                    StructField("created", LongType(), True),
-                    StructField("livemode", BooleanType(), True),
-                    StructField("amount", LongType(), True),
-                    StructField("currency", StringType(), True),
-                    StructField("charge", StringType(), True),
-                    StructField("payment_intent", StringType(), True),
-                    StructField("status", StringType(), True),
-                    StructField("reason", StringType(), True),
-                    StructField("evidence", StringType(), True),
-                    StructField("evidence_details", StringType(), True),
-                    StructField("is_charge_refundable", BooleanType(), True),
-                    StructField("metadata", StringType(), True),
-                ]),
-                "payment_methods": StructType([
-                    StructField("id", StringType(), False),
-                    StructField("object", StringType(), True),
-                    StructField("created", LongType(), True),
-                    StructField("livemode", BooleanType(), True),
-                    StructField("type", StringType(), True),
-                    StructField("customer", StringType(), True),
-                    StructField("billing_details", StringType(), True),
-                    StructField("card", StringType(), True),
-                    StructField("us_bank_account", StringType(), True),
-                    StructField("metadata", StringType(), True),
-                ]),
-                "balance_transactions": StructType([
-                    StructField("id", StringType(), False),
-                    StructField("object", StringType(), True),
-                    StructField("created", LongType(), True),
-                    StructField("livemode", BooleanType(), True),
-                    StructField("amount", LongType(), True),
-                    StructField("currency", StringType(), True),
-                    StructField("net", LongType(), True),
-                    StructField("fee", LongType(), True),
-                    StructField("fee_details", StringType(), True),
-                    StructField("type", StringType(), True),
-                    StructField("source", StringType(), True),
-                    StructField("status", StringType(), True),
-                    StructField("description", StringType(), True),
-                    StructField("available_on", LongType(), True),
-                    StructField("exchange_rate", StringType(), True),
-                ]),
-                "payouts": StructType([
-                    StructField("id", StringType(), False),
-                    StructField("object", StringType(), True),
-                    StructField("created", LongType(), True),
-                    StructField("livemode", BooleanType(), True),
-                    StructField("amount", LongType(), True),
-                    StructField("currency", StringType(), True),
-                    StructField("arrival_date", LongType(), True),
-                    StructField("status", StringType(), True),
-                    StructField("type", StringType(), True),
-                    StructField("method", StringType(), True),
-                    StructField("destination", StringType(), True),
-                    StructField("description", StringType(), True),
-                    StructField("balance_transaction", StringType(), True),
-                    StructField("failure_code", StringType(), True),
-                    StructField("failure_message", StringType(), True),
-                    StructField("metadata", StringType(), True),
-                ]),
-                "invoice_items": StructType([
-                    StructField("id", StringType(), False),
-                    StructField("object", StringType(), True),
-                    StructField("created", LongType(), True),
-                    StructField("livemode", BooleanType(), True),
-                    StructField("amount", LongType(), True),
-                    StructField("currency", StringType(), True),
-                    StructField("customer", StringType(), True),
-                    StructField("invoice", StringType(), True),
-                    StructField("subscription", StringType(), True),
-                    StructField("price", StringType(), True),
-                    StructField("description", StringType(), True),
-                    StructField("quantity", LongType(), True),
-                    StructField("unit_amount", LongType(), True),
-                    StructField("unit_amount_decimal", StringType(), True),
-                    StructField("period_start", LongType(), True),
-                    StructField("period_end", LongType(), True),
-                    StructField("discounts", StringType(), True),
-                    StructField("metadata", StringType(), True),
-                ]),
-                "plans": StructType([
-                    StructField("id", StringType(), False),
-                    StructField("object", StringType(), True),
-                    StructField("created", LongType(), True),
-                    StructField("livemode", BooleanType(), True),
-                    StructField("active", BooleanType(), True),
-                    StructField("amount", LongType(), True),
-                    StructField("currency", StringType(), True),
-                    StructField("interval", StringType(), True),
-                    StructField("interval_count", LongType(), True),
-                    StructField("product", StringType(), True),
-                    StructField("nickname", StringType(), True),
-                    StructField("usage_type", StringType(), True),
-                    StructField("aggregate_usage", StringType(), True),
-                    StructField("trial_period_days", LongType(), True),
-                    StructField("tiers", StringType(), True),
-                    StructField("tiers_mode", StringType(), True),
-                    StructField("metadata", StringType(), True),
-                    StructField("deleted", BooleanType(), True),
-                ]),
-                "events": StructType([
-                    StructField("id", StringType(), False),
-                    StructField("object", StringType(), True),
-                    StructField("created", LongType(), True),
-                    StructField("livemode", BooleanType(), True),
-                    StructField("type", StringType(), True),
-                    StructField("data", StringType(), True),
-                    StructField("api_version", StringType(), True),
-                    StructField("request", StringType(), True),
-                    StructField("pending_webhooks", LongType(), True),
-                ]),
-                "coupons": StructType([
-                    StructField("id", StringType(), False),
-                    StructField("object", StringType(), True),
-                    StructField("created", LongType(), True),
-                    StructField("livemode", BooleanType(), True),
-                    StructField("name", StringType(), True),
-                    StructField("amount_off", LongType(), True),
-                    StructField("percent_off", StringType(), True),
-                    StructField("currency", StringType(), True),
-                    StructField("duration", StringType(), True),
-                    StructField("duration_in_months", LongType(), True),
-                    StructField("max_redemptions", LongType(), True),
-                    StructField("times_redeemed", LongType(), True),
-                    StructField("redeem_by", LongType(), True),
-                    StructField("valid", BooleanType(), True),
-                    StructField("applies_to", StringType(), True),
-                    StructField("metadata", StringType(), True),
-                ])
+                "customers": StructType(
+                    [
+                        StructField("id", StringType(), False),
+                        StructField("object", StringType(), True),
+                        StructField("created", LongType(), True),
+                        StructField("updated", LongType(), True),
+                        StructField("livemode", BooleanType(), True),
+                        StructField("email", StringType(), True),
+                        StructField("name", StringType(), True),
+                        StructField("phone", StringType(), True),
+                        StructField("description", StringType(), True),
+                        StructField("address_line1", StringType(), True),
+                        StructField("address_line2", StringType(), True),
+                        StructField("address_city", StringType(), True),
+                        StructField("address_state", StringType(), True),
+                        StructField("address_postal_code", StringType(), True),
+                        StructField("address_country", StringType(), True),
+                        StructField("shipping_name", StringType(), True),
+                        StructField("shipping_phone", StringType(), True),
+                        StructField("shipping_address_line1", StringType(), True),
+                        StructField("shipping_address_line2", StringType(), True),
+                        StructField("shipping_address_city", StringType(), True),
+                        StructField("shipping_address_state", StringType(), True),
+                        StructField("shipping_address_postal_code", StringType(), True),
+                        StructField("shipping_address_country", StringType(), True),
+                        StructField("balance", LongType(), True),
+                        StructField("currency", StringType(), True),
+                        StructField("delinquent", BooleanType(), True),
+                        StructField("preferred_locales", ArrayType(StringType()), True),
+                        StructField("invoice_settings", StringType(), True),
+                        StructField("tax_exempt", StringType(), True),
+                        StructField("default_source", StringType(), True),
+                        StructField("invoice_prefix", StringType(), True),
+                        StructField("metadata", StringType(), True),
+                        StructField("discount", StringType(), True),
+                        StructField("deleted", BooleanType(), True),
+                    ]
+                ),
+                "charges": StructType(
+                    [
+                        StructField("id", StringType(), False),
+                        StructField("object", StringType(), True),
+                        StructField("created", LongType(), True),
+                        StructField("livemode", BooleanType(), True),
+                        StructField("amount", LongType(), True),
+                        StructField("amount_captured", LongType(), True),
+                        StructField("amount_refunded", LongType(), True),
+                        StructField("currency", StringType(), True),
+                        StructField("status", StringType(), True),
+                        StructField("paid", BooleanType(), True),
+                        StructField("refunded", BooleanType(), True),
+                        StructField("captured", BooleanType(), True),
+                        StructField("disputed", BooleanType(), True),
+                        StructField("customer", StringType(), True),
+                        StructField("invoice", StringType(), True),
+                        StructField("payment_intent", StringType(), True),
+                        StructField("payment_method", StringType(), True),
+                        StructField("description", StringType(), True),
+                        StructField("receipt_email", StringType(), True),
+                        StructField("receipt_url", StringType(), True),
+                        StructField("statement_descriptor", StringType(), True),
+                        StructField("billing_details", StringType(), True),
+                        StructField("payment_method_details", StringType(), True),
+                        StructField("outcome", StringType(), True),
+                        StructField("metadata", StringType(), True),
+                        StructField("failure_code", StringType(), True),
+                        StructField("failure_message", StringType(), True),
+                    ]
+                ),
+                "payment_intents": StructType(
+                    [
+                        StructField("id", StringType(), False),
+                        StructField("object", StringType(), True),
+                        StructField("created", LongType(), True),
+                        StructField("livemode", BooleanType(), True),
+                        StructField("amount", LongType(), True),
+                        StructField("amount_capturable", LongType(), True),
+                        StructField("amount_received", LongType(), True),
+                        StructField("currency", StringType(), True),
+                        StructField("status", StringType(), True),
+                        StructField("canceled_at", LongType(), True),
+                        StructField("cancellation_reason", StringType(), True),
+                        StructField("customer", StringType(), True),
+                        StructField("invoice", StringType(), True),
+                        StructField("payment_method", StringType(), True),
+                        StructField("description", StringType(), True),
+                        StructField("receipt_email", StringType(), True),
+                        StructField("statement_descriptor", StringType(), True),
+                        StructField("capture_method", StringType(), True),
+                        StructField("confirmation_method", StringType(), True),
+                        StructField("charges", StringType(), True),
+                        StructField("payment_method_options", StringType(), True),
+                        StructField("shipping", StringType(), True),
+                        StructField("metadata", StringType(), True),
+                        StructField("latest_charge", StringType(), True),
+                    ]
+                ),
+                "subscriptions": StructType(
+                    [
+                        StructField("id", StringType(), False),
+                        StructField("object", StringType(), True),
+                        StructField("created", LongType(), True),
+                        StructField("livemode", BooleanType(), True),
+                        StructField("status", StringType(), True),
+                        StructField("current_period_start", LongType(), True),
+                        StructField("current_period_end", LongType(), True),
+                        StructField("cancel_at", LongType(), True),
+                        StructField("canceled_at", LongType(), True),
+                        StructField("ended_at", LongType(), True),
+                        StructField("trial_start", LongType(), True),
+                        StructField("trial_end", LongType(), True),
+                        StructField("customer", StringType(), True),
+                        StructField("default_payment_method", StringType(), True),
+                        StructField("latest_invoice", StringType(), True),
+                        StructField("billing_cycle_anchor", LongType(), True),
+                        StructField("collection_method", StringType(), True),
+                        StructField("days_until_due", LongType(), True),
+                        StructField("items", StringType(), True),
+                        StructField("metadata", StringType(), True),
+                        StructField("discount", StringType(), True),
+                        StructField("cancel_at_period_end", BooleanType(), True),
+                    ]
+                ),
+                "invoices": StructType(
+                    [
+                        StructField("id", StringType(), False),
+                        StructField("object", StringType(), True),
+                        StructField("created", LongType(), True),
+                        StructField("livemode", BooleanType(), True),
+                        StructField("status", StringType(), True),
+                        StructField("paid", BooleanType(), True),
+                        StructField("amount_due", LongType(), True),
+                        StructField("amount_paid", LongType(), True),
+                        StructField("amount_remaining", LongType(), True),
+                        StructField("total", LongType(), True),
+                        StructField("subtotal", LongType(), True),
+                        StructField("tax", LongType(), True),
+                        StructField("currency", StringType(), True),
+                        StructField("customer", StringType(), True),
+                        StructField("subscription", StringType(), True),
+                        StructField("charge", StringType(), True),
+                        StructField("payment_intent", StringType(), True),
+                        StructField("billing_reason", StringType(), True),
+                        StructField("collection_method", StringType(), True),
+                        StructField("customer_email", StringType(), True),
+                        StructField("customer_name", StringType(), True),
+                        StructField("due_date", LongType(), True),
+                        StructField("period_start", LongType(), True),
+                        StructField("period_end", LongType(), True),
+                        StructField("number", StringType(), True),
+                        StructField("hosted_invoice_url", StringType(), True),
+                        StructField("invoice_pdf", StringType(), True),
+                        StructField("lines", StringType(), True),
+                        StructField("metadata", StringType(), True),
+                    ]
+                ),
+                "products": StructType(
+                    [
+                        StructField("id", StringType(), False),
+                        StructField("object", StringType(), True),
+                        StructField("created", LongType(), True),
+                        StructField("updated", LongType(), True),
+                        StructField("livemode", BooleanType(), True),
+                        StructField("name", StringType(), True),
+                        StructField("description", StringType(), True),
+                        StructField("active", BooleanType(), True),
+                        StructField("type", StringType(), True),
+                        StructField("unit_label", StringType(), True),
+                        StructField("url", StringType(), True),
+                        StructField("images", ArrayType(StringType()), True),
+                        StructField("metadata", StringType(), True),
+                        StructField("statement_descriptor", StringType(), True),
+                        StructField("tax_code", StringType(), True),
+                        StructField("shippable", BooleanType(), True),
+                        StructField("deleted", BooleanType(), True),
+                    ]
+                ),
+                "prices": StructType(
+                    [
+                        StructField("id", StringType(), False),
+                        StructField("object", StringType(), True),
+                        StructField("created", LongType(), True),
+                        StructField("livemode", BooleanType(), True),
+                        StructField("active", BooleanType(), True),
+                        StructField("currency", StringType(), True),
+                        StructField("unit_amount", LongType(), True),
+                        StructField("unit_amount_decimal", StringType(), True),
+                        StructField("product", StringType(), True),
+                        StructField("billing_scheme", StringType(), True),
+                        StructField("type", StringType(), True),
+                        StructField("recurring", StringType(), True),
+                        StructField("lookup_key", StringType(), True),
+                        StructField("nickname", StringType(), True),
+                        StructField("tax_behavior", StringType(), True),
+                        StructField("tiers", StringType(), True),
+                        StructField("tiers_mode", StringType(), True),
+                        StructField("metadata", StringType(), True),
+                    ]
+                ),
+                "refunds": StructType(
+                    [
+                        StructField("id", StringType(), False),
+                        StructField("object", StringType(), True),
+                        StructField("created", LongType(), True),
+                        StructField("livemode", BooleanType(), True),
+                        StructField("amount", LongType(), True),
+                        StructField("currency", StringType(), True),
+                        StructField("charge", StringType(), True),
+                        StructField("payment_intent", StringType(), True),
+                        StructField("status", StringType(), True),
+                        StructField("reason", StringType(), True),
+                        StructField("receipt_number", StringType(), True),
+                        StructField("metadata", StringType(), True),
+                        StructField("failure_reason", StringType(), True),
+                    ]
+                ),
+                "disputes": StructType(
+                    [
+                        StructField("id", StringType(), False),
+                        StructField("object", StringType(), True),
+                        StructField("created", LongType(), True),
+                        StructField("livemode", BooleanType(), True),
+                        StructField("amount", LongType(), True),
+                        StructField("currency", StringType(), True),
+                        StructField("charge", StringType(), True),
+                        StructField("payment_intent", StringType(), True),
+                        StructField("status", StringType(), True),
+                        StructField("reason", StringType(), True),
+                        StructField("evidence", StringType(), True),
+                        StructField("evidence_details", StringType(), True),
+                        StructField("is_charge_refundable", BooleanType(), True),
+                        StructField("metadata", StringType(), True),
+                    ]
+                ),
+                "payment_methods": StructType(
+                    [
+                        StructField("id", StringType(), False),
+                        StructField("object", StringType(), True),
+                        StructField("created", LongType(), True),
+                        StructField("livemode", BooleanType(), True),
+                        StructField("type", StringType(), True),
+                        StructField("customer", StringType(), True),
+                        StructField("billing_details", StringType(), True),
+                        StructField("card", StringType(), True),
+                        StructField("us_bank_account", StringType(), True),
+                        StructField("metadata", StringType(), True),
+                    ]
+                ),
+                "balance_transactions": StructType(
+                    [
+                        StructField("id", StringType(), False),
+                        StructField("object", StringType(), True),
+                        StructField("created", LongType(), True),
+                        StructField("livemode", BooleanType(), True),
+                        StructField("amount", LongType(), True),
+                        StructField("currency", StringType(), True),
+                        StructField("net", LongType(), True),
+                        StructField("fee", LongType(), True),
+                        StructField("fee_details", StringType(), True),
+                        StructField("type", StringType(), True),
+                        StructField("source", StringType(), True),
+                        StructField("status", StringType(), True),
+                        StructField("description", StringType(), True),
+                        StructField("available_on", LongType(), True),
+                        StructField("exchange_rate", StringType(), True),
+                    ]
+                ),
+                "payouts": StructType(
+                    [
+                        StructField("id", StringType(), False),
+                        StructField("object", StringType(), True),
+                        StructField("created", LongType(), True),
+                        StructField("livemode", BooleanType(), True),
+                        StructField("amount", LongType(), True),
+                        StructField("currency", StringType(), True),
+                        StructField("arrival_date", LongType(), True),
+                        StructField("status", StringType(), True),
+                        StructField("type", StringType(), True),
+                        StructField("method", StringType(), True),
+                        StructField("destination", StringType(), True),
+                        StructField("description", StringType(), True),
+                        StructField("balance_transaction", StringType(), True),
+                        StructField("failure_code", StringType(), True),
+                        StructField("failure_message", StringType(), True),
+                        StructField("metadata", StringType(), True),
+                    ]
+                ),
+                "invoice_items": StructType(
+                    [
+                        StructField("id", StringType(), False),
+                        StructField("object", StringType(), True),
+                        StructField("created", LongType(), True),
+                        StructField("livemode", BooleanType(), True),
+                        StructField("amount", LongType(), True),
+                        StructField("currency", StringType(), True),
+                        StructField("customer", StringType(), True),
+                        StructField("invoice", StringType(), True),
+                        StructField("subscription", StringType(), True),
+                        StructField("price", StringType(), True),
+                        StructField("description", StringType(), True),
+                        StructField("quantity", LongType(), True),
+                        StructField("unit_amount", LongType(), True),
+                        StructField("unit_amount_decimal", StringType(), True),
+                        StructField("period_start", LongType(), True),
+                        StructField("period_end", LongType(), True),
+                        StructField("discounts", StringType(), True),
+                        StructField("metadata", StringType(), True),
+                    ]
+                ),
+                "plans": StructType(
+                    [
+                        StructField("id", StringType(), False),
+                        StructField("object", StringType(), True),
+                        StructField("created", LongType(), True),
+                        StructField("livemode", BooleanType(), True),
+                        StructField("active", BooleanType(), True),
+                        StructField("amount", LongType(), True),
+                        StructField("currency", StringType(), True),
+                        StructField("interval", StringType(), True),
+                        StructField("interval_count", LongType(), True),
+                        StructField("product", StringType(), True),
+                        StructField("nickname", StringType(), True),
+                        StructField("usage_type", StringType(), True),
+                        StructField("aggregate_usage", StringType(), True),
+                        StructField("trial_period_days", LongType(), True),
+                        StructField("tiers", StringType(), True),
+                        StructField("tiers_mode", StringType(), True),
+                        StructField("metadata", StringType(), True),
+                        StructField("deleted", BooleanType(), True),
+                    ]
+                ),
+                "events": StructType(
+                    [
+                        StructField("id", StringType(), False),
+                        StructField("object", StringType(), True),
+                        StructField("created", LongType(), True),
+                        StructField("livemode", BooleanType(), True),
+                        StructField("type", StringType(), True),
+                        StructField("data", StringType(), True),
+                        StructField("api_version", StringType(), True),
+                        StructField("request", StringType(), True),
+                        StructField("pending_webhooks", LongType(), True),
+                    ]
+                ),
+                "coupons": StructType(
+                    [
+                        StructField("id", StringType(), False),
+                        StructField("object", StringType(), True),
+                        StructField("created", LongType(), True),
+                        StructField("livemode", BooleanType(), True),
+                        StructField("name", StringType(), True),
+                        StructField("amount_off", LongType(), True),
+                        StructField("percent_off", StringType(), True),
+                        StructField("currency", StringType(), True),
+                        StructField("duration", StringType(), True),
+                        StructField("duration_in_months", LongType(), True),
+                        StructField("max_redemptions", LongType(), True),
+                        StructField("times_redeemed", LongType(), True),
+                        StructField("redeem_by", LongType(), True),
+                        StructField("valid", BooleanType(), True),
+                        StructField("applies_to", StringType(), True),
+                        StructField("metadata", StringType(), True),
+                    ]
+                ),
             }
 
         def list_tables(self) -> list[str]:
@@ -659,10 +691,12 @@ def register_lakeflow_source(spark):
                 "invoice_items",
                 "plans",
                 "events",
-                "coupons"
+                "coupons",
             ]
 
-        def get_table_schema(self, table_name: str) -> StructType:
+        def get_table_schema(
+            self, table_name: str, table_options: Dict[str, str]
+        ) -> StructType:
             """
             Get the Spark schema for a Stripe table.
 
@@ -675,7 +709,9 @@ def register_lakeflow_source(spark):
             schema = self._schema_config[table_name]
             return schema
 
-        def read_table_metadata(self, table_name: str) -> dict:
+        def read_table_metadata(
+            self, table_name: str, table_options: Dict[str, str]
+        ) -> dict:
             """
             Get metadata for a Stripe table.
 
@@ -689,10 +725,12 @@ def register_lakeflow_source(spark):
             return {
                 "primary_key": config["primary_key"],
                 "cursor_field": config["cursor_field"],
-                "ingestion_type": config["ingestion_type"]
+                "ingestion_type": config["ingestion_type"],
             }
 
-        def read_table(self, table_name: str, start_offset: dict) -> Tuple[List[Dict], Dict]:
+        def read_table(
+            self, table_name: str, start_offset: dict, table_options: Dict[str, str]
+        ) -> Tuple[List[Dict], Dict]:
             """
             Read data from a Stripe table.
 
@@ -711,7 +749,10 @@ def register_lakeflow_source(spark):
             config = self._object_config[table_name]
 
             # Determine if this is an incremental read
-            is_incremental = start_offset is not None and start_offset.get(config["cursor_field"]) is not None
+            is_incremental = (
+                start_offset is not None
+                and start_offset.get(config["cursor_field"]) is not None
+            )
 
             if is_incremental:
                 return self._read_data_incremental(table_name, start_offset)
@@ -750,7 +791,9 @@ def register_lakeflow_source(spark):
                 response = requests.get(url, auth=self.auth, params=params)
 
                 if response.status_code != 200:
-                    raise Exception(f"Stripe API error for {table_name}: {response.status_code} {response.text}")
+                    raise Exception(
+                        f"Stripe API error for {table_name}: {response.status_code} {response.text}"
+                    )
 
                 data = response.json()
                 records = data.get("data", [])
@@ -783,7 +826,9 @@ def register_lakeflow_source(spark):
             offset = {cursor_field: latest_cursor_value} if latest_cursor_value > 0 else {}
             return all_records, offset
 
-        def _read_data_incremental(self, table_name: str, start_offset: dict) -> Tuple[List[Dict], Dict]:
+        def _read_data_incremental(
+            self, table_name: str, start_offset: dict
+        ) -> Tuple[List[Dict], Dict]:
             """
             Read incremental data from a Stripe table using cursor.
 
@@ -809,7 +854,7 @@ def register_lakeflow_source(spark):
                 # Build request parameters for incremental fetch
                 params = {
                     "limit": 100,
-                    f"{cursor_field}[gte]": cursor_start  # Greater than or equal to last cursor
+                    f"{cursor_field}[gte]": cursor_start,  # Greater than or equal to last cursor
                 }
 
                 if starting_after:
@@ -820,7 +865,9 @@ def register_lakeflow_source(spark):
                 response = requests.get(url, auth=self.auth, params=params)
 
                 if response.status_code != 200:
-                    raise Exception(f"Stripe API error for {table_name}: {response.status_code} {response.text}")
+                    raise Exception(
+                        f"Stripe API error for {table_name}: {response.status_code} {response.text}"
+                    )
 
                 data = response.json()
                 records = data.get("data", [])
@@ -885,7 +932,9 @@ def register_lakeflow_source(spark):
             elif table_name == "payment_methods":
                 return [self._transform_payment_method_record(record) for record in records]
             elif table_name == "balance_transactions":
-                return [self._transform_balance_transaction_record(record) for record in records]
+                return [
+                    self._transform_balance_transaction_record(record) for record in records
+                ]
             elif table_name == "payouts":
                 return [self._transform_payout_record(record) for record in records]
             elif table_name == "invoice_items":
@@ -918,7 +967,9 @@ def register_lakeflow_source(spark):
 
             # Extract invoice settings
             invoice_settings = record.get("invoice_settings")
-            invoice_settings_json = json.dumps(invoice_settings) if invoice_settings else None
+            invoice_settings_json = (
+                json.dumps(invoice_settings) if invoice_settings else None
+            )
 
             # Extract metadata
             metadata = record.get("metadata")
@@ -935,13 +986,11 @@ def register_lakeflow_source(spark):
                 "created": record.get("created"),
                 "updated": record.get("updated"),  # May not exist for customers
                 "livemode": record.get("livemode"),
-
                 # Customer details
                 "email": record.get("email"),
                 "name": record.get("name"),
                 "phone": record.get("phone"),
                 "description": record.get("description"),
-
                 # Address (flattened)
                 "address_line1": address.get("line1"),
                 "address_line2": address.get("line2"),
@@ -949,7 +998,6 @@ def register_lakeflow_source(spark):
                 "address_state": address.get("state"),
                 "address_postal_code": address.get("postal_code"),
                 "address_country": address.get("country"),
-
                 # Shipping (flattened)
                 "shipping_name": shipping.get("name"),
                 "shipping_phone": shipping.get("phone"),
@@ -959,29 +1007,23 @@ def register_lakeflow_source(spark):
                 "shipping_address_state": shipping_address.get("state"),
                 "shipping_address_postal_code": shipping_address.get("postal_code"),
                 "shipping_address_country": shipping_address.get("country"),
-
                 # Financial fields
                 "balance": record.get("balance"),
                 "currency": record.get("currency"),
                 "delinquent": record.get("delinquent"),
-
                 # Preferences
                 "preferred_locales": record.get("preferred_locales"),
-
                 # Complex fields as JSON strings
                 "invoice_settings": invoice_settings_json,
                 "metadata": metadata_json,
                 "discount": discount_json,
-
                 # Tax information
                 "tax_exempt": record.get("tax_exempt"),
-
                 # References
                 "default_source": record.get("default_source"),
                 "invoice_prefix": record.get("invoice_prefix"),
-
                 # Deletion tracking
-                "deleted": record.get("deleted", False)
+                "deleted": record.get("deleted", False),
             }
 
             return transformed
@@ -1017,7 +1059,9 @@ def register_lakeflow_source(spark):
                 "receipt_url": record.get("receipt_url"),
                 "statement_descriptor": record.get("statement_descriptor"),
                 "billing_details": json.dumps(billing_details) if billing_details else None,
-                "payment_method_details": json.dumps(payment_method_details) if payment_method_details else None,
+                "payment_method_details": json.dumps(payment_method_details)
+                if payment_method_details
+                else None,
                 "outcome": json.dumps(outcome) if outcome else None,
                 "metadata": json.dumps(metadata) if metadata else None,
                 "failure_code": record.get("failure_code"),
@@ -1052,7 +1096,9 @@ def register_lakeflow_source(spark):
                 "capture_method": record.get("capture_method"),
                 "confirmation_method": record.get("confirmation_method"),
                 "charges": json.dumps(charges) if charges else None,
-                "payment_method_options": json.dumps(payment_method_options) if payment_method_options else None,
+                "payment_method_options": json.dumps(payment_method_options)
+                if payment_method_options
+                else None,
                 "shipping": json.dumps(shipping) if shipping else None,
                 "metadata": json.dumps(metadata) if metadata else None,
                 "latest_charge": record.get("latest_charge"),
@@ -1215,7 +1261,9 @@ def register_lakeflow_source(spark):
                 "status": record.get("status"),
                 "reason": record.get("reason"),
                 "evidence": json.dumps(evidence) if evidence else None,
-                "evidence_details": json.dumps(evidence_details) if evidence_details else None,
+                "evidence_details": json.dumps(evidence_details)
+                if evidence_details
+                else None,
                 "is_charge_refundable": record.get("is_charge_refundable"),
                 "metadata": json.dumps(metadata) if metadata else None,
             }
@@ -1259,7 +1307,9 @@ def register_lakeflow_source(spark):
                 "status": record.get("status"),
                 "description": record.get("description"),
                 "available_on": record.get("available_on"),
-                "exchange_rate": str(record.get("exchange_rate")) if record.get("exchange_rate") else None,
+                "exchange_rate": str(record.get("exchange_rate"))
+                if record.get("exchange_rate")
+                else None,
             }
 
         def _transform_payout_record(self, record: Dict) -> Dict:
@@ -1298,7 +1348,9 @@ def register_lakeflow_source(spark):
                 "subscription": record.get("subscription"),
                 "price": record.get("price"),
                 "quantity": record.get("quantity"),
-                "billing_thresholds": json.dumps(billing_thresholds) if billing_thresholds else None,
+                "billing_thresholds": json.dumps(billing_thresholds)
+                if billing_thresholds
+                else None,
                 "tax_rates": json.dumps(tax_rates) if tax_rates else None,
                 "metadata": json.dumps(metadata) if metadata else None,
             }
@@ -1323,8 +1375,12 @@ def register_lakeflow_source(spark):
                 "quantity": record.get("quantity"),
                 "unit_amount": record.get("unit_amount"),
                 "unit_amount_decimal": record.get("unit_amount_decimal"),
-                "period_start": record.get("period", {}).get("start") if record.get("period") else None,
-                "period_end": record.get("period", {}).get("end") if record.get("period") else None,
+                "period_start": record.get("period", {}).get("start")
+                if record.get("period")
+                else None,
+                "period_end": record.get("period", {}).get("end")
+                if record.get("period")
+                else None,
                 "discounts": json.dumps(discounts) if discounts else None,
                 "metadata": json.dumps(metadata) if metadata else None,
             }
@@ -1384,7 +1440,9 @@ def register_lakeflow_source(spark):
                 "livemode": record.get("livemode"),
                 "name": record.get("name"),
                 "amount_off": record.get("amount_off"),
-                "percent_off": str(record.get("percent_off")) if record.get("percent_off") else None,
+                "percent_off": str(record.get("percent_off"))
+                if record.get("percent_off")
+                else None,
                 "currency": record.get("currency"),
                 "duration": record.get("duration"),
                 "duration_in_months": record.get("duration_in_months"),
@@ -1412,7 +1470,7 @@ def register_lakeflow_source(spark):
                 else:
                     return {
                         "status": "error",
-                        "message": f"API error: {response.status_code} {response.text}"
+                        "message": f"API error: {response.status_code} {response.text}",
                     }
             except Exception as e:
                 return {"status": "error", "message": f"Connection failed: {str(e)}"}
