@@ -1,7 +1,9 @@
+from locale import dcgettext
 import requests
 import base64
 from pyspark.sql.types import *
 from datetime import datetime
+from typing import Dict, List, Iterator
 
 
 class LakeflowConnect:
@@ -18,7 +20,21 @@ class LakeflowConnect:
             "Content-Type": "application/json",
         }
 
-    def get_table_schema(self, table_name: str) -> StructType:
+    def list_tables(self) -> List[str]:
+        return [
+            "tickets",
+            "organizations",
+            "articles",
+            "brands",
+            "groups",
+            "ticket_comments",
+            "topics",
+            "users",
+        ]
+
+    def get_table_schema(
+        self, table_name: str, table_options: Dict[str, str]
+    ) -> StructType:
         """
         Fetch the schema of a table.
         """
@@ -247,7 +263,9 @@ class LakeflowConnect:
 
         return schemas[table_name]
 
-    def read_table_metadata(self, table_name: str) -> dict:
+    def read_table_metadata(
+        self, table_name: str, table_options: Dict[str, str]
+    ) -> dict:
         """
         Fetch the metadata of a table.
         """
@@ -267,7 +285,9 @@ class LakeflowConnect:
 
         return metadata[table_name]
 
-    def read_table(self, table_name: str, start_offset: dict):
+    def read_table(
+        self, table_name: str, start_offset: dict, table_options: Dict[str, str]
+    ) -> (Iterator[dict], dict):
         # Map table names to their API endpoints and response keys
         api_config = {
             "tickets": {
