@@ -12,9 +12,9 @@ from typing import (
     Dict,
     Iterator,
     List,
-    Tuple,
 )
 
+from pydantic import BaseModel, ConfigDict, PositiveInt
 from pyspark.sql import Row
 from pyspark.sql.datasource import DataSource, DataSourceReader, SimpleDataSourceStreamReader
 from pyspark.sql.types import *
@@ -166,6 +166,14 @@ def register_lakeflow_source(spark):
     # sources/example/example.py
     ########################################################
 
+    class ExampleTableOptions(BaseModel):
+        model_config = ConfigDict(extra="allow")
+
+        num_rows: PositiveInt
+
+
+    # This is an example implementation of the LakeflowConnect class.
+    # Test a change 123
     class LakeflowConnect:
         def __init__(self, options: Dict[str, str]) -> None:
             """
@@ -182,7 +190,9 @@ def register_lakeflow_source(spark):
             """
             return self.tables
 
-        def get_table_schema(self, table_name: str) -> StructType:
+        def get_table_schema(
+            self, table_name: str, table_options: Dict[str, str]
+        ) -> StructType:
             """
             Fetch the schema of a table.
             """
@@ -205,7 +215,9 @@ def register_lakeflow_source(spark):
 
             return schema
 
-        def read_table_metadata(self, table_name: str) -> Dict[str, str]:
+        def read_table_metadata(
+            self, table_name: str, table_options: Dict[str, str]
+        ) -> Dict[str, str]:
             """
             Fetch the metadata of a table.
             """
@@ -218,24 +230,34 @@ def register_lakeflow_source(spark):
 
             return metadata
 
-        def read_table(self, table_name: str, start_offset: dict) -> (Iterator[dict], dict):
+        def read_table(
+            self, table_name: str, start_offset: dict, table_options: Dict[str, str]
+        ) -> (Iterator[dict], dict):
             """
             Read data from a table and return an iterator of records along with the next offset.
             """
-            # Call the helper function to get the iterator
-            data_iterator = self._read_helper(table_name, start_offset)
+            options = ExampleTableOptions(**table_options)
+            num_rows = options.num_rows
 
-            # Calculate the next offset (increment by 10 since helper returns 10 records)
+            # Call the helper function to get the iterator
+            data_iterator = self._read_helper(table_name, start_offset, num_rows=num_rows)
+
+            # Calculate the next offset based on how many rows were produced
             current_offset = (
                 int(start_offset)
                 if start_offset
                 else (self.offset_id if table_name == "my_table" else self.offset_key)
             )
-            next_offset = current_offset + 10
+            next_offset = current_offset + num_rows
 
             return data_iterator, {"offset": next_offset}
 
-        def _read_helper(self, table_name: str, start_offset: dict) -> Iterator[dict]:
+        def _read_helper(
+            self,
+            table_name: str,
+            start_offset: dict,
+            num_rows: int = 10,
+        ) -> Iterator[dict]:
             if table_name not in self.tables:
                 raise ValueError(f"Unknown table: {table_name}")
 
@@ -245,7 +267,7 @@ def register_lakeflow_source(spark):
                 else (self.offset_id if table_name == "my_table" else self.offset_key)
             )
 
-            for i in range(10):
+            for i in range(num_rows):
                 if table_name == "my_table":
                     record = {
                         "id": current_offset,

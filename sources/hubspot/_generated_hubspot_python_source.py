@@ -188,62 +188,62 @@ def register_lakeflow_source(spark):
                     "primary_key": "id",
                     "cursor_field": "updatedAt",
                     "cursor_property_field": "lastmodifieddate",
-                    "associations": ["companies"]
+                    "associations": ["companies"],
                 },
                 "companies": {
-                    "primary_key": "id", 
+                    "primary_key": "id",
                     "cursor_field": "updatedAt",
                     "cursor_property_field": "hs_lastmodifieddate",
-                    "associations": ["contacts"]
+                    "associations": ["contacts"],
                 },
                 "deals": {
                     "primary_key": "id",
-                    "cursor_field": "updatedAt", 
+                    "cursor_field": "updatedAt",
                     "cursor_property_field": "hs_lastmodifieddate",
-                    "associations": ["contacts", "companies", "tickets"]
+                    "associations": ["contacts", "companies", "tickets"],
                 },
                 "tickets": {
                     "primary_key": "id",
                     "cursor_field": "updatedAt",
-                    "cursor_property_field": "hs_lastmodifieddate", 
-                    "associations": ["contacts", "companies", "deals"]
+                    "cursor_property_field": "hs_lastmodifieddate",
+                    "associations": ["contacts", "companies", "deals"],
                 },
                 "calls": {
                     "primary_key": "id",
                     "cursor_field": "updatedAt",
                     "cursor_property_field": "hs_lastmodifieddate",
-                    "associations": ["contacts", "companies", "deals", "tickets"]
+                    "associations": ["contacts", "companies", "deals", "tickets"],
                 },
                 "emails": {
                     "primary_key": "id",
-                    "cursor_field": "updatedAt", 
+                    "cursor_field": "updatedAt",
                     "cursor_property_field": "hs_lastmodifieddate",
-                    "associations": ["contacts", "companies", "deals", "tickets"]
+                    "associations": ["contacts", "companies", "deals", "tickets"],
                 },
                 "meetings": {
                     "primary_key": "id",
                     "cursor_field": "updatedAt",
                     "cursor_property_field": "hs_lastmodifieddate",
-                    "associations": ["contacts", "companies", "deals", "tickets"] 
+                    "associations": ["contacts", "companies", "deals", "tickets"],
                 },
                 "tasks": {
                     "primary_key": "id",
                     "cursor_field": "updatedAt",
                     "cursor_property_field": "hs_lastmodifieddate",
-                    "associations": ["contacts", "companies", "deals", "tickets"]
+                    "associations": ["contacts", "companies", "deals", "tickets"],
                 },
                 "notes": {
-                    "primary_key": "id", 
+                    "primary_key": "id",
                     "cursor_field": "updatedAt",
                     "cursor_property_field": "hs_lastmodifieddate",
-                    "associations": ["contacts", "companies", "deals", "tickets"]
+                    "associations": ["contacts", "companies", "deals", "tickets"],
                 },
                 "deal_split": {
                     "primary_key": "id",
                     "cursor_field": "updatedAt",
                     "cursor_property_field": "hs_lastmodifieddate",
-                    "associations": []
-                }
+                    "associations": [],
+                },
             }
 
             # Default config for custom objects
@@ -251,7 +251,7 @@ def register_lakeflow_source(spark):
                 "primary_key": "id",
                 "cursor_field": "updatedAt",
                 "cursor_property_field": "hs_lastmodifieddate",
-                "associations": []
+                "associations": [],
             }
 
         def list_tables(self) -> list[str]:
@@ -259,7 +259,17 @@ def register_lakeflow_source(spark):
             List available tables including standard CRM objects and custom objects.
             """
             # Standard HubSpot CRM objects
-            standard_tables = ["contacts", "companies", "deals", "tickets", "calls", "emails", "meetings", "tasks", "notes"]
+            standard_tables = [
+                "contacts",
+                "companies",
+                "deals",
+                "tickets",
+                "calls",
+                "emails",
+                "meetings",
+                "tasks",
+                "notes",
+            ]
 
             # Add dynamic discovery of custom objects
             try:
@@ -302,7 +312,9 @@ def register_lakeflow_source(spark):
             """Get configuration for a specific object type"""
             return self._object_config.get(table_name, self._default_object_config)
 
-        def get_table_schema(self, table_name: str) -> StructType:
+        def get_table_schema(
+            self, table_name: str, table_options: Dict[str, str]
+        ) -> StructType:
             """
             Fetch the schema of a table.
 
@@ -324,7 +336,9 @@ def register_lakeflow_source(spark):
 
             return schema
 
-        def read_table_metadata(self, table_name: str) -> dict:
+        def read_table_metadata(
+            self, table_name: str, table_options: Dict[str, str]
+        ) -> dict:
             """
             Fetch the metadata of a table.
 
@@ -381,7 +395,7 @@ def register_lakeflow_source(spark):
                 "cursor_property_field": config["cursor_property_field"],
                 "property_names": property_names,
                 "associations": config.get("associations", []),
-                "ingestion_type": "cdc"
+                "ingestion_type": "cdc",
             }
 
         def _discover_crm_object_schema(self, table_name: str) -> StructType:
@@ -415,7 +429,9 @@ def register_lakeflow_source(spark):
 
                     # Map HubSpot property types to Spark types
                     spark_type = self._map_hubspot_type_to_spark(prop_type)
-                    properties_fields.append(StructField(f"properties_{prop_name}", spark_type, True))
+                    properties_fields.append(
+                        StructField(f"properties_{prop_name}", spark_type, True)
+                    )
 
             # Combine base fields with flattened properties
             all_fields = base_fields + properties_fields
@@ -464,7 +480,9 @@ def register_lakeflow_source(spark):
 
             return type_mapping.get(hubspot_type.lower(), StringType())
 
-        def read_table(self, table_name: str, start_offset: dict = None):
+        def read_table(
+            self, table_name: str, start_offset: dict, table_options: Dict[str, str]
+        ) -> (Iterator[dict], dict):
             """
             Read data from HubSpot API using unified approach.
 
@@ -476,14 +494,18 @@ def register_lakeflow_source(spark):
                 Tuple of (records, new_offset)
             """
             # Determine if this is an incremental read
-            is_incremental = start_offset is not None and start_offset.get("updatedAt") is not None
+            is_incremental = (
+                start_offset is not None and start_offset.get("updatedAt") is not None
+            )
 
             if is_incremental:
                 return self._read_data(table_name, start_offset, incremental=True)
             else:
                 return self._read_data(table_name, None, incremental=False)
 
-        def _read_data(self, table_name: str, start_offset: dict = None, incremental: bool = False):
+        def _read_data(
+            self, table_name: str, start_offset: dict = None, incremental: bool = False
+        ):
             """Unified method to read data from HubSpot API"""
 
             # Get discovered properties and object configuration
@@ -500,9 +522,15 @@ def register_lakeflow_source(spark):
                 if incremental:
                     # Use search API for incremental reads
                     records, after, updated_time = self._fetch_incremental_batch(
-                        table_name, property_names, cursor_property_field, start_offset, after
+                        table_name,
+                        property_names,
+                        cursor_property_field,
+                        start_offset,
+                        after,
                     )
-                    if updated_time and (not latest_updated or updated_time > latest_updated):
+                    if updated_time and (
+                        not latest_updated or updated_time > latest_updated
+                    ):
                         latest_updated = updated_time
                 else:
                     # Use objects API for full refresh
@@ -521,7 +549,9 @@ def register_lakeflow_source(spark):
                 if not incremental:
                     for record in transformed_records:
                         updated_at = record.get("updatedAt")
-                        if updated_at and (not latest_updated or updated_at > latest_updated):
+                        if updated_at and (
+                            not latest_updated or updated_at > latest_updated
+                        ):
                             latest_updated = updated_at
 
                 if not after:
@@ -533,8 +563,13 @@ def register_lakeflow_source(spark):
             offset = {"updatedAt": latest_updated} if latest_updated else {}
             return all_records, offset
 
-        def _fetch_full_refresh_batch(self, table_name: str, property_names: List[str], 
-                                    associations: List[str], after: str = None):
+        def _fetch_full_refresh_batch(
+            self,
+            table_name: str,
+            property_names: List[str],
+            associations: List[str],
+            after: str = None,
+        ):
             """Fetch a batch of records using full refresh API"""
             url = f"{self.base_url}/crm/v3/objects/{table_name}?limit=100&archived=false"
 
@@ -547,7 +582,9 @@ def register_lakeflow_source(spark):
 
             resp = requests.get(url, headers=self.auth_header)
             if resp.status_code != 200:
-                raise Exception(f"HubSpot API error for {table_name}: {resp.status_code} {resp.text}")
+                raise Exception(
+                    f"HubSpot API error for {table_name}: {resp.status_code} {resp.text}"
+                )
 
             data = resp.json()
             records = data.get("results", [])
@@ -555,30 +592,43 @@ def register_lakeflow_source(spark):
 
             return records, next_after
 
-        def _fetch_incremental_batch(self, table_name: str, property_names: List[str], 
-                                    cursor_property_field: str, start_offset: dict, after: str = None):
+        def _fetch_incremental_batch(
+            self,
+            table_name: str,
+            property_names: List[str],
+            cursor_property_field: str,
+            start_offset: dict,
+            after: str = None,
+        ):
             """Fetch a batch of records using incremental search API"""
             last_updated = start_offset.get("updatedAt", "1970-01-01T00:00:00.000Z")
 
             # Convert to milliseconds for HubSpot
             try:
-                last_updated_ms = int(datetime.fromisoformat(
-                    last_updated.replace('Z', '+00:00')
-                ).timestamp() * 1000)
+                last_updated_ms = int(
+                    datetime.fromisoformat(last_updated.replace("Z", "+00:00")).timestamp()
+                    * 1000
+                )
             except:
                 last_updated_ms = 0
 
             search_body = {
-                "filterGroups": [{
-                    "filters": [{
-                        "propertyName": cursor_property_field,
-                        "operator": "GTE",
-                        "value": str(last_updated_ms)
-                    }]
-                }],
-                "sorts": [{"propertyName": cursor_property_field, "direction": "ASCENDING"}],
+                "filterGroups": [
+                    {
+                        "filters": [
+                            {
+                                "propertyName": cursor_property_field,
+                                "operator": "GTE",
+                                "value": str(last_updated_ms),
+                            }
+                        ]
+                    }
+                ],
+                "sorts": [
+                    {"propertyName": cursor_property_field, "direction": "ASCENDING"}
+                ],
                 "limit": 100,
-                "properties": property_names or []
+                "properties": property_names or [],
             }
 
             if after:
@@ -588,7 +638,9 @@ def register_lakeflow_source(spark):
             resp = requests.post(url, headers=self.auth_header, json=search_body)
 
             if resp.status_code != 200:
-                raise Exception(f"HubSpot API error for {table_name}: {resp.status_code} {resp.text}")
+                raise Exception(
+                    f"HubSpot API error for {table_name}: {resp.status_code} {resp.text}"
+                )
 
             data = resp.json()
             records = data.get("results", [])
@@ -638,9 +690,14 @@ def register_lakeflow_source(spark):
                 if association_type in associations_data:
                     assoc_data = associations_data[association_type]
                     if isinstance(assoc_data, dict) and "results" in assoc_data:
-                        association_list = [item.get("id", "") for item in assoc_data["results"]]
+                        association_list = [
+                            item.get("id", "") for item in assoc_data["results"]
+                        ]
                     elif isinstance(assoc_data, list):
-                        association_list = [str(item) if not isinstance(item, dict) else item.get("id", "") for item in assoc_data]
+                        association_list = [
+                            str(item) if not isinstance(item, dict) else item.get("id", "")
+                            for item in assoc_data
+                        ]
 
                 result[association_type] = association_list
 
@@ -656,8 +713,8 @@ def register_lakeflow_source(spark):
                     return {"status": "success", "message": "Connection successful"}
                 else:
                     return {
-                        "status": "error", 
-                        "message": f"API error: {resp.status_code} {resp.text}"
+                        "status": "error",
+                        "message": f"API error: {resp.status_code} {resp.text}",
                     }
             except Exception as e:
                 return {"status": "error", "message": f"Connection failed: {str(e)}"}
