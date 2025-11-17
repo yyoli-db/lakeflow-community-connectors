@@ -77,6 +77,7 @@ class LakeflowConnect:
                            # Do not include options like filters for row or column selection here; those features may be supported in the future.
         Returns:
             An iterator of records in JSON format and an offset.
+            DO NOT convert the JSON based on the schema in `get_table_schema` in `read_table`.
             records: An iterator of records in JSON format.
             offset: An offset in dict.
         """
