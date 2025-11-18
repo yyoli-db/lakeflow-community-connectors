@@ -164,5 +164,5 @@ class SpecParser:
         """
         for obj in self._model.objects:
             if obj.table.source_table == table_name:
-                return obj.table.table_configuration
-        return None
+                return obj.table.table_configuration or {}
+        return {}
