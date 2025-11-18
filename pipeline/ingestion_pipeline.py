@@ -10,6 +10,7 @@ def _create_cdc_table(
     primary_key: str,
     cursor_field: str,
     view_name: str,
+    table_config: dict[str, str],
 ) -> None:
     """Create CDC table using streaming and apply_changes"""
 
@@ -19,6 +20,7 @@ def _create_cdc_table(
             spark.readStream.format("lakeflow_connect")
             .option("databricks.connection", connection_name)
             .option("tableName", table)
+            .options(**table_config)
             .load()
         )
 
@@ -33,7 +35,12 @@ def _create_cdc_table(
 
 
 def _create_snapshot_table(
-    spark, connection_name: str, table: str, primary_key: str, view_name: str
+    spark,
+    connection_name: str,
+    table: str,
+    primary_key: str,
+    view_name: str,
+    table_config: dict[str, str],
 ) -> None:
     """Create snapshot table using batch read and apply_changes_from_snapshot"""
 
@@ -43,6 +50,7 @@ def _create_snapshot_table(
             spark.read.format("lakeflow_connect")
             .option("databricks.connection", connection_name)
             .option("tableName", table)
+            .options(**table_config)
             .load()
         )
 
@@ -56,7 +64,11 @@ def _create_snapshot_table(
 
 
 def _create_append_table(
-    spark, connection_name: str, table: str, view_name: str
+    spark,
+    connection_name: str,
+    table: str,
+    view_name: str,
+    table_config: dict[str, str],
 ) -> None:
     """Create append table using streaming without apply_changes"""
 
@@ -68,6 +80,7 @@ def _create_append_table(
             spark.readStream.format("lakeflow_connect")
             .option("databricks.connection", connection_name)
             .option("tableName", table)
+            .options(**table_config)
             .load()
         )
 
@@ -107,17 +120,24 @@ def ingest(spark, pipeline_spec: dict) -> None:
         cursor_field = metadata[table]["cursor_field"]
         ingestion_type = metadata[table].get("ingestion_type", "cdc")
         view_name = table + "_staging"
+        table_config = spec.get_table_configuration(table)
 
         if ingestion_type == "cdc":
             _create_cdc_table(
-                spark, connection_name, table, primary_key, cursor_field, view_name
+                spark,
+                connection_name,
+                table,
+                primary_key,
+                cursor_field,
+                view_name,
+                table_config,
             )
         elif ingestion_type == "snapshot":
             _create_snapshot_table(
-                spark, connection_name, table, primary_key, view_name
+                spark, connection_name, table, primary_key, view_name, table_config
             )
         elif ingestion_type == "append":
-            _create_append_table(spark, connection_name, table, view_name)
+            _create_append_table(spark, connection_name, table, view_name, table_config)
 
     for table_name in table_list:
         _ingest_table(table_name)
