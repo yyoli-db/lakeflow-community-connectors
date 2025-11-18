@@ -6,7 +6,6 @@
 # ==============================================================================
 
 from datetime import datetime, timedelta
-from decimal import Decimal
 from typing import Any, Iterator
 
 from pyspark.sql import Row
@@ -96,6 +95,8 @@ def register_lakeflow_source(spark):
                 return float(value)
             elif isinstance(field_type, DecimalType):
                 # New support for Decimal type
+                from decimal import Decimal
+
                 if isinstance(value, str) and value.strip():
                     return Decimal(value)
                 return Decimal(str(value))
@@ -962,6 +963,8 @@ def register_lakeflow_source(spark):
 
             Incremental behaviour mirrors issues using updated_at as a cursor,
             but for now this implementation always performs a forward read
+            from the provided (optional) cursor.
+            """
             owner = table_options.get("owner")
             repo = table_options.get("repo")
             if not owner or not repo:
