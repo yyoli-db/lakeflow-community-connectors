@@ -47,19 +47,29 @@ def extract_imports_and_code(content: str) -> tuple:
         line = lines[i]
         stripped = line.strip()
 
-        # Skip docstrings and comments at the beginning
+        # Skip docstrings and comments at the beginning of the file.
+        # We only treat them specially while we are still in the initial
+        # "import section" (in_imports == True). Once we have seen real
+        # code, docstrings are kept as-is.
         if stripped.startswith('"""') or stripped.startswith("'''"):
-            # Handle multiline docstrings
             if in_imports:
+                # Skip leading module docstring lines entirely
                 i += 1
                 continue
             else:
+                # Inner/function/class docstrings are part of the code
                 code_lines.append(line)
                 i += 1
                 continue
 
-        # Check if this is an import line
-        if stripped.startswith(("import ", "from ")):
+        # Check if this is a *top-level* import line.
+        # We deliberately:
+        #   - only look for imports while in_imports is True, so imports
+        #     inside functions/methods remain in the code section, and
+        #   - require the line to be unindented (start at column 0),
+        #     so that docstring lines such as "    from the provided ..."
+        #     are not mis‑classified as imports.
+        if in_imports and line.startswith(("import ", "from ")):
             # Handle multiline imports
             full_import = line
             # Count parentheses in the full import so far
