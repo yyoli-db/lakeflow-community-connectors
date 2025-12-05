@@ -6,6 +6,7 @@
 # ==============================================================================
 
 from datetime import datetime
+from decimal import Decimal
 from typing import (
     Any,
     Dict,
@@ -104,7 +105,6 @@ def register_lakeflow_source(spark):
                 return float(value)
             elif isinstance(field_type, DecimalType):
                 # New support for Decimal type
-                from decimal import Decimal
 
                 if isinstance(value, str) and value.strip():
                     return Decimal(value)
@@ -420,7 +420,7 @@ def register_lakeflow_source(spark):
             for association in config["associations"]:
                 base_fields.append(StructField(association, ArrayType(StringType()), True))
 
-            # Build dynamic properties schema based on API response
+            # Build nested properties schema based on API response
             properties_fields = []
 
             if isinstance(properties, list):
@@ -430,14 +430,15 @@ def register_lakeflow_source(spark):
 
                     # Map HubSpot property types to Spark types
                     spark_type = self._map_hubspot_type_to_spark(prop_type)
-                    properties_fields.append(
-                        StructField(f"properties_{prop_name}", spark_type, True)
-                    )
+                    properties_fields.append(StructField(prop_name, spark_type, True))
 
-            # Combine base fields with flattened properties
-            all_fields = base_fields + properties_fields
+            # Create nested properties StructType
+            properties_struct = StructType(properties_fields) if properties_fields else StructType([])
 
-            schema = StructType(all_fields)
+            # Add properties as a nested field
+            base_fields.append(StructField("properties", properties_struct, True))
+
+            schema = StructType(base_fields)
 
             return schema
 
@@ -500,17 +501,18 @@ def register_lakeflow_source(spark):
             )
 
             if is_incremental:
-                return self._read_data(table_name, start_offset, incremental=True)
+                return self._read_data(table_name, start_offset, incremental=True, table_options=table_options)
             else:
-                return self._read_data(table_name, None, incremental=False)
+                return self._read_data(table_name, None, incremental=False, table_options=table_options)
 
         def _read_data(
-            self, table_name: str, start_offset: dict = None, incremental: bool = False
+            self, table_name: str, start_offset: dict = None, incremental: bool = False,
+            table_options: Dict[str, str] = None
         ):
             """Unified method to read data from HubSpot API"""
 
             # Get discovered properties and object configuration
-            metadata = self.read_table_metadata(table_name)
+            metadata = self.read_table_metadata(table_name, table_options)
             property_names = metadata.get("property_names", [])
             cursor_property_field = metadata.get("cursor_property_field")
             associations = metadata.get("associations", [])
@@ -665,17 +667,12 @@ def register_lakeflow_source(spark):
             transformed_record = {}
 
             # Copy base fields
-            for field in ["id", "createdAt", "updatedAt", "archived"]:
+            for field in ["id", "createdAt", "updatedAt", "archived", "properties"]:
                 if field in record:
                     transformed_record[field] = record[field]
 
             # Handle associations
             transformed_record.update(self._extract_associations(record, table_name))
-
-            # Flatten properties with properties_ prefix
-            properties = record.get("properties", {})
-            for prop_name, prop_value in properties.items():
-                transformed_record[f"properties_{prop_name}"] = prop_value
 
             return transformed_record
 
