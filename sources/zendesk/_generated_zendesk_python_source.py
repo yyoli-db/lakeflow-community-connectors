@@ -6,6 +6,7 @@
 # ==============================================================================
 
 from datetime import datetime
+from decimal import Decimal
 from typing import (
     Any,
     Dict,
@@ -13,7 +14,6 @@ from typing import (
     List,
 )
 
-from locale import dcgettext
 from pyspark.sql import Row
 from pyspark.sql.datasource import DataSource, DataSourceReader, SimpleDataSourceStreamReader
 from pyspark.sql.types import *
@@ -102,7 +102,6 @@ def register_lakeflow_source(spark):
                 return float(value)
             elif isinstance(field_type, DecimalType):
                 # New support for Decimal type
-                from decimal import Decimal
 
                 if isinstance(value, str) and value.strip():
                     return Decimal(value)
@@ -432,14 +431,14 @@ def register_lakeflow_source(spark):
             Fetch the metadata of a table.
             """
             metadata = {
-                "tickets": {"primary_key": "id", "cursor_field": "updated_at"},
-                "organizations": {"primary_key": "id", "cursor_field": "updated_at"},
-                "articles": {"primary_key": "id", "cursor_field": "updated_at"},
-                "brands": {"primary_key": "id", "cursor_field": "updated_at"},
-                "groups": {"primary_key": "id", "cursor_field": "updated_at"},
-                "ticket_comments": {"primary_key": "id", "cursor_field": "updated_at"},
-                "topics": {"primary_key": "id", "cursor_field": "updated_at"},
-                "users": {"primary_key": "id", "cursor_field": "updated_at"},
+                "tickets": {"primary_keys": ["id"], "cursor_field": "updated_at"},
+                "organizations": {"primary_keys": ["id"], "cursor_field": "updated_at"},
+                "articles": {"primary_keys": ["id"], "cursor_field": "updated_at"},
+                "brands": {"primary_keys": ["id"], "cursor_field": "updated_at"},
+                "groups": {"primary_keys": ["id"], "cursor_field": "updated_at"},
+                "ticket_comments": {"primary_keys": ["id"], "cursor_field": "updated_at"},
+                "topics": {"primary_keys": ["id"], "cursor_field": "updated_at"},
+                "users": {"primary_keys": ["id"], "cursor_field": "updated_at"},
             }
 
             if table_name not in metadata:
@@ -733,7 +732,7 @@ def register_lakeflow_source(spark):
                 return StructType(
                     [
                         StructField("tableName", StringType(), False),
-                        StructField("primary_key", ArrayType(StringType()), True),
+                        StructField("primary_keys", ArrayType(StringType()), True),
                         StructField("cursor_field", StringType(), True),
                         StructField("ingestion_type", StringType(), True),
                     ]

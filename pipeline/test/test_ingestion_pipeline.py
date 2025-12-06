@@ -38,17 +38,17 @@ def base_metadata():
     """Base metadata returned by _get_table_metadata."""
     return {
         "users": {
-            "primary_key": "user_id",
+            "primary_keys": ["user_id"],
             "cursor_field": "updated_at",
             "ingestion_type": "cdc",
         },
         "orders": {
-            "primary_key": "order_id",
+            "primary_keys": ["order_id"],
             "cursor_field": "modified_at",
             "ingestion_type": "snapshot",
         },
         "events": {
-            "primary_key": "event_id",
+            "primary_keys": ["event_id"],
             "cursor_field": "timestamp",
             "ingestion_type": "append",
         },
@@ -90,7 +90,7 @@ class TestIngestCDC:
                 mock_spark,
                 "test_connection",
                 "users",
-                "user_id",  # primary_key from metadata
+                ["user_id"],  # primary_keys from metadata
                 "updated_at",  # sequence_by from metadata cursor_field
                 "1",  # default scd_type
                 "users_staging",  # view_name
@@ -206,7 +206,7 @@ class TestIngestSnapshot:
                 mock_spark,
                 "test_connection",
                 "orders",
-                "order_id",  # primary_key from metadata
+                ["order_id"],  # primary_keys from metadata
                 "1",  # default scd_type
                 "orders_staging",  # view_name
                 {},  # table_config
@@ -484,3 +484,134 @@ class TestIngestEdgeCases:
 
             # Verify scd_type defaults to "1"
             assert mock_cdc.call_args[0][5] == "1"
+
+
+class TestMetadataOverride:
+    """Test scenarios where metadata is missing but spec provides override values."""
+
+    def test_spec_provides_primary_keys_when_metadata_missing(self, mock_spark):
+        """Test that spec can provide primary_keys when metadata doesn't have it."""
+        # Metadata missing primary_keys
+        partial_metadata = {
+            "users": {
+                "cursor_field": "updated_at",
+                "ingestion_type": "cdc",
+            },
+        }
+
+        spec = {
+            "connection_name": "test_connection",
+            "objects": [
+                {
+                    "table": {
+                        "source_table": "users",
+                        "table_configuration": {
+                            "primary_keys": ["user_id", "tenant_id"],
+                        },
+                    }
+                }
+            ],
+        }
+
+        with patch(
+            "pipeline.ingestion_pipeline._get_table_metadata",
+            return_value=partial_metadata,
+        ), patch("pipeline.ingestion_pipeline._create_cdc_table") as mock_cdc:
+            ingest(mock_spark, spec)
+
+            # Verify primary_keys from spec is used
+            mock_cdc.assert_called_once()
+            assert mock_cdc.call_args[0][3] == ["user_id", "tenant_id"]
+
+    def test_spec_overrides_metadata_primary_keys(self, mock_spark, base_metadata):
+        """Test that spec primary_keys overrides metadata primary_keys."""
+        spec = {
+            "connection_name": "test_connection",
+            "objects": [
+                {
+                    "table": {
+                        "source_table": "users",
+                        "table_configuration": {
+                            "primary_keys": ["composite_key_1", "composite_key_2"],
+                        },
+                    }
+                }
+            ],
+        }
+
+        with patch(
+            "pipeline.ingestion_pipeline._get_table_metadata",
+            return_value=base_metadata,
+        ), patch("pipeline.ingestion_pipeline._create_cdc_table") as mock_cdc:
+            ingest(mock_spark, spec)
+
+            # Verify spec primary_keys overrides metadata
+            mock_cdc.assert_called_once()
+            assert mock_cdc.call_args[0][3] == ["composite_key_1", "composite_key_2"]
+
+    def test_metadata_missing_all_optional_fields(self, mock_spark):
+        """Test ingestion when metadata has no optional fields, spec provides all."""
+        # Minimal metadata with only required fields
+        minimal_metadata = {
+            "users": {},
+        }
+
+        spec = {
+            "connection_name": "test_connection",
+            "objects": [
+                {
+                    "table": {
+                        "source_table": "users",
+                        "table_configuration": {
+                            "primary_keys": ["id"],
+                            "sequence_by": "created_at",
+                            "scd_type": "SCD_TYPE_2",
+                        },
+                    }
+                }
+            ],
+        }
+
+        with patch(
+            "pipeline.ingestion_pipeline._get_table_metadata",
+            return_value=minimal_metadata,
+        ), patch("pipeline.ingestion_pipeline._create_cdc_table") as mock_cdc:
+            ingest(mock_spark, spec)
+
+            # Verify all values from spec are used
+            mock_cdc.assert_called_once()
+            call_args = mock_cdc.call_args[0]
+            assert call_args[3] == ["id"]  # primary_keys
+            assert call_args[4] == "created_at"  # sequence_by
+            assert call_args[5] == "SCD_TYPE_2"  # scd_type
+
+    def test_metadata_missing_ingestion_type_defaults_to_cdc(self, mock_spark):
+        """Test that missing ingestion_type in metadata defaults to 'cdc'."""
+        # Metadata without ingestion_type
+        metadata_no_ingestion_type = {
+            "users": {
+                "primary_keys": ["user_id"],
+                "cursor_field": "updated_at",
+            },
+        }
+
+        spec = {
+            "connection_name": "test_connection",
+            "objects": [
+                {
+                    "table": {
+                        "source_table": "users",
+                        "table_configuration": {},
+                    }
+                }
+            ],
+        }
+
+        with patch(
+            "pipeline.ingestion_pipeline._get_table_metadata",
+            return_value=metadata_no_ingestion_type,
+        ), patch("pipeline.ingestion_pipeline._create_cdc_table") as mock_cdc:
+            ingest(mock_spark, spec)
+
+            # Verify CDC table was created (default ingestion_type)
+            mock_cdc.assert_called_once()
