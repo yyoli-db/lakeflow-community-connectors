@@ -1,3 +1,4 @@
+from typing import List
 from pyspark import pipelines as sdp
 from pyspark.sql.functions import col, expr
 from libs.spec_parser import SpecParser
@@ -7,7 +8,7 @@ def _create_cdc_table(
     spark,
     connection_name: str,
     table: str,
-    primary_key: str,
+    primary_keys: List[str],
     sequence_by: str,
     scd_type: str,
     view_name: str,
@@ -29,7 +30,7 @@ def _create_cdc_table(
     sdp.apply_changes(
         target=table,
         source=view_name,
-        keys=[primary_key] if isinstance(primary_key, str) else primary_key,
+        keys=primary_keys,
         sequence_by=col(sequence_by),
         stored_as_scd_type=scd_type,
     )
@@ -39,7 +40,7 @@ def _create_snapshot_table(
     spark,
     connection_name: str,
     table: str,
-    primary_key: str,
+    primary_keys: List[str],
     scd_type: str,
     view_name: str,
     table_config: dict[str, str],
@@ -60,7 +61,7 @@ def _create_snapshot_table(
     sdp.apply_changes_from_snapshot(
         target=table,
         source=view_name,
-        keys=[primary_key] if isinstance(primary_key, str) else primary_key,
+        keys=primary_keys,
         stored_as_scd_type=scd_type,
     )
 
@@ -88,7 +89,7 @@ def _create_append_table(
 
 
 def _get_table_metadata(spark, connection_name: str, table_list: list[str]) -> dict:
-    """Get table metadata (primary_key, cursor_field, ingestion_type etc.)"""
+    """Get table metadata (primary_keys, cursor_field, ingestion_type etc.)"""
     df = (
         spark.read.format("lakeflow_connect")
         .option("databricks.connection", connection_name)
@@ -98,11 +99,14 @@ def _get_table_metadata(spark, connection_name: str, table_list: list[str]) -> d
     )
     metadata = {}
     for row in df.collect():
-        metadata[row["tableName"]] = {
-            "primary_key": row["primary_key"] or [],
-            "cursor_field": row["cursor_field"] or [],
-            "ingestion_type": row["ingestion_type"] or "cdc",
-        }
+        table_metadata = {}
+        if row["primary_keys"] is not None:
+            table_metadata["primary_keys"] = row["primary_keys"]
+        if row["cursor_field"] is not None:
+            table_metadata["cursor_field"] = row["cursor_field"]
+        if row["ingestion_type"] is not None:
+            table_metadata["ingestion_type"] = row["ingestion_type"]
+        metadata[row["tableName"]] = table_metadata
     return metadata
 
 
@@ -118,25 +122,26 @@ def ingest(spark, pipeline_spec: dict) -> None:
 
     def _ingest_table(table: str) -> None:
         """Helper function to ingest a single table"""
-        primary_key = metadata[table]["primary_key"]
-        cursor_field = metadata[table]["cursor_field"]
+        primary_keys = metadata[table].get("primary_keys")
+        cursor_field = metadata[table].get("cursor_field")
         ingestion_type = metadata[table].get("ingestion_type", "cdc")
         view_name = table + "_staging"
         table_config = spec.get_table_configuration(table)
 
         # Override parameters with spec values if available
+        primary_keys = spec.get_primary_keys(table) or primary_keys
         sequence_by = spec.get_sequence_by(table) or cursor_field
-        scd_type = spec.get_scd_type(table)
-        if scd_type == "APPEND_ONLY":
+        scd_type_raw = spec.get_scd_type(table)
+        if scd_type_raw == "APPEND_ONLY":
             ingestion_type = "append"
-        scd_type = scd_type or "1"
+        scd_type = "2" if scd_type_raw == "SCD_TYPE_2" else "1"
 
         if ingestion_type == "cdc":
             _create_cdc_table(
                 spark,
                 connection_name,
                 table,
-                primary_key,
+                primary_keys,
                 sequence_by,
                 scd_type,
                 view_name,
@@ -147,7 +152,7 @@ def ingest(spark, pipeline_spec: dict) -> None:
                 spark,
                 connection_name,
                 table,
-                primary_key,
+                primary_keys,
                 scd_type,
                 view_name,
                 table_config,

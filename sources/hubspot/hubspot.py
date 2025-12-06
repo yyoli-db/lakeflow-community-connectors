@@ -23,61 +23,61 @@ class LakeflowConnect:
         # Centralized object metadata configuration
         self._object_config = {
             "contacts": {
-                "primary_key": "id",
+                "primary_keys": ["id"],
                 "cursor_field": "updatedAt",
                 "cursor_property_field": "lastmodifieddate",
                 "associations": ["companies"],
             },
             "companies": {
-                "primary_key": "id",
+                "primary_keys": ["id"],
                 "cursor_field": "updatedAt",
                 "cursor_property_field": "hs_lastmodifieddate",
                 "associations": ["contacts"],
             },
             "deals": {
-                "primary_key": "id",
+                "primary_keys": ["id"],
                 "cursor_field": "updatedAt",
                 "cursor_property_field": "hs_lastmodifieddate",
                 "associations": ["contacts", "companies", "tickets"],
             },
             "tickets": {
-                "primary_key": "id",
+                "primary_keys": ["id"],
                 "cursor_field": "updatedAt",
                 "cursor_property_field": "hs_lastmodifieddate",
                 "associations": ["contacts", "companies", "deals"],
             },
             "calls": {
-                "primary_key": "id",
+                "primary_keys": ["id"],
                 "cursor_field": "updatedAt",
                 "cursor_property_field": "hs_lastmodifieddate",
                 "associations": ["contacts", "companies", "deals", "tickets"],
             },
             "emails": {
-                "primary_key": "id",
+                "primary_keys": ["id"],
                 "cursor_field": "updatedAt",
                 "cursor_property_field": "hs_lastmodifieddate",
                 "associations": ["contacts", "companies", "deals", "tickets"],
             },
             "meetings": {
-                "primary_key": "id",
+                "primary_keys": ["id"],
                 "cursor_field": "updatedAt",
                 "cursor_property_field": "hs_lastmodifieddate",
                 "associations": ["contacts", "companies", "deals", "tickets"],
             },
             "tasks": {
-                "primary_key": "id",
+                "primary_keys": ["id"],
                 "cursor_field": "updatedAt",
                 "cursor_property_field": "hs_lastmodifieddate",
                 "associations": ["contacts", "companies", "deals", "tickets"],
             },
             "notes": {
-                "primary_key": "id",
+                "primary_keys": ["id"],
                 "cursor_field": "updatedAt",
                 "cursor_property_field": "hs_lastmodifieddate",
                 "associations": ["contacts", "companies", "deals", "tickets"],
             },
             "deal_split": {
-                "primary_key": "id",
+                "primary_keys": ["id"],
                 "cursor_field": "updatedAt",
                 "cursor_property_field": "hs_lastmodifieddate",
                 "associations": [],
@@ -86,7 +86,7 @@ class LakeflowConnect:
 
         # Default config for custom objects
         self._default_object_config = {
-            "primary_key": "id",
+            "primary_keys": ["id"],
             "cursor_field": "updatedAt",
             "cursor_property_field": "hs_lastmodifieddate",
             "associations": [],
@@ -185,7 +185,7 @@ class LakeflowConnect:
 
         Returns:
             A dictionary containing the metadata of the table. It includes the following keys:
-                - primary_key: The name of the primary key of the table.
+                - primary_keys: The name of the primary key columns of the table.
                 - cursor_field: The name of the field to use as a cursor for incremental loading.
                 - ingestion_type: The type of ingestion to use for the table. It should be one of:
                     - "snapshot": For snapshot loading.
@@ -228,7 +228,7 @@ class LakeflowConnect:
         property_names = [prop["name"] for prop in properties]
 
         return {
-            "primary_key": config["primary_key"],
+            "primary_keys": config["primary_keys"],
             "cursor_field": config["cursor_field"],
             "cursor_property_field": config["cursor_property_field"],
             "property_names": property_names,

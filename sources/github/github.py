@@ -480,71 +480,71 @@ class LakeflowConnect:
 
         For `issues`:
             - ingestion_type: cdc
-            - primary_key: id
+            - primary_keys: ["id"]
             - cursor_field: updated_at
         """
         if table_name == "issues":
             return {
-                "primary_key": "id",
+                "primary_keys": ["id"],
                 "cursor_field": "updated_at",
                 "ingestion_type": "cdc",
             }
         if table_name == "repositories":
             return {
-                "primary_key": "id",
+                "primary_keys": ["id"],
                 "ingestion_type": "snapshot",
             }
         if table_name == "pull_requests":
             return {
-                "primary_key": "id",
+                "primary_keys": ["id"],
                 "cursor_field": "updated_at",
                 "ingestion_type": "cdc",
             }
         if table_name == "comments":
             return {
-                "primary_key": "id",
+                "primary_keys": ["id"],
                 "cursor_field": "updated_at",
                 "ingestion_type": "cdc",
             }
         if table_name == "commits":
             # Append-only stream keyed by immutable sha
             return {
-                "primary_key": "sha",
+                "primary_keys": ["sha"],
                 "ingestion_type": "append",
             }
         if table_name == "users":
             return {
-                "primary_key": "id",
+                "primary_keys": ["id"],
                 "ingestion_type": "snapshot",
             }
         if table_name == "organizations":
             return {
-                "primary_key": "id",
+                "primary_keys": ["id"],
                 "ingestion_type": "snapshot",
             }
         if table_name == "teams":
             return {
-                "primary_key": "id",
+                "primary_keys": ["id"],
                 "ingestion_type": "snapshot",
             }
         if table_name == "assignees":
             return {
-                "primary_key": ["repository_owner", "repository_name", "id"],
+                "primary_keys": ["repository_owner", "repository_name", "id"],
                 "ingestion_type": "snapshot",
             }
         if table_name == "collaborators":
             return {
-                "primary_key": ["repository_owner", "repository_name", "id"],
+                "primary_keys": ["repository_owner", "repository_name", "id"],
                 "ingestion_type": "snapshot",
             }
         if table_name == "branches":
             return {
-                "primary_key": ["repository_owner", "repository_name", "name"],
+                "primary_keys": ["repository_owner", "repository_name", "name"],
                 "ingestion_type": "snapshot",
             }
         if table_name == "reviews":
             return {
-                "primary_key": "id",
+                "primary_keys": ["id"],
                 "ingestion_type": "append",
             }
 
