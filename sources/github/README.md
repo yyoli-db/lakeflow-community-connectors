@@ -24,8 +24,9 @@ Provide the following **connection-level** options when configuring the connecto
 |-----------|--------|----------|---------------------------------------------------------------------------------------------|------------------------------------|
 | `token`   | string | yes      | GitHub Personal Access Token used for authentication.                                       | `ghp_xxx...`                       |
 | `base_url`| string | no       | Base URL for the GitHub API. Override for GitHub Enterprise Server if needed; otherwise defaults to `https://api.github.com`. | `https://github.mycompany.com/api/v3` |
+| `externalOptionsAllowList` | string | no | Comma-separated list of table-specific option names that are allowed to be passed through to the connector. | `owner,repo,state,start_date,per_page,max_pages_per_batch,lookback_seconds,org,pull_number` |
 
-> **Note**: Table-specific options such as `owner`, `repo`, or `org` are **not** connection parameters. They are provided per-table via table options in the pipeline specification.
+> **Note**: Table-specific options such as `owner`, `repo`, or `org` are **not** connection parameters. They are provided per-table via table options in the pipeline specification. However, these option names must be included in `externalOptionsAllowList` for the connection to allow them.
 
 ### Obtaining the Required Parameters
 
@@ -44,13 +45,11 @@ Provide the following **connection-level** options when configuring the connecto
 
 A Unity Catalog connection for this connector can be created in two ways via the UI:
 
-1. Use the **Lakeflow Community Connector** flow from the **Add Data** page.
-2. Navigate to the **Unity Catalog** UI and create a **Lakeflow Community Connector** connection, selecting the GitHub connector code.
+1. Follow the **Lakeflow Community Connector** UI flow from the **Add Data** page.
+2. Select any existing Lakeflow Community Connector connection for this source or create a new one.
+3. Set `externalOptionsAllowList` to `owner,repo,state,start_date,per_page,max_pages_per_batch,lookback_seconds,org,pull_number` to allow table-specific options to be passed through.
 
-You can also create the connection via the standard Unity Catalog API by supplying the same connection options (`token`, optional `base_url`) in the connection configuration.
-
-When defining the connection, set the `externalOptionsAllowList` to include any table-level options you plan to use. For the GitHub connector, this typically includes:
-`owner,repo,state,start_date,per_page,max_pages_per_batch,lookback_seconds,org,pull_number`.
+The connection can also be created using the standard Unity Catalog API by supplying the same connection options (`token`, optional `base_url`, and `externalOptionsAllowList`) in the connection configuration.
 
 ## Supported Objects
 
