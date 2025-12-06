@@ -8,7 +8,8 @@ def _create_cdc_table(
     connection_name: str,
     table: str,
     primary_key: str,
-    cursor_field: str,
+    sequence_by: str,
+    scd_type: str,
     view_name: str,
     table_config: dict[str, str],
 ) -> None:
@@ -29,8 +30,8 @@ def _create_cdc_table(
         target=table,
         source=view_name,
         keys=[primary_key] if isinstance(primary_key, str) else primary_key,
-        sequence_by=col(cursor_field),
-        stored_as_scd_type="1",
+        sequence_by=col(sequence_by),
+        stored_as_scd_type=scd_type,
     )
 
 
@@ -39,6 +40,7 @@ def _create_snapshot_table(
     connection_name: str,
     table: str,
     primary_key: str,
+    scd_type: str,
     view_name: str,
     table_config: dict[str, str],
 ) -> None:
@@ -59,7 +61,7 @@ def _create_snapshot_table(
         target=table,
         source=view_name,
         keys=[primary_key] if isinstance(primary_key, str) else primary_key,
-        stored_as_scd_type="1",
+        stored_as_scd_type=scd_type,
     )
 
 
@@ -122,19 +124,33 @@ def ingest(spark, pipeline_spec: dict) -> None:
         view_name = table + "_staging"
         table_config = spec.get_table_configuration(table)
 
+        # Override parameters with spec values if available
+        sequence_by = spec.get_sequence_by(table) or cursor_field
+        scd_type = spec.get_scd_type(table)
+        if scd_type == "APPEND_ONLY":
+            ingestion_type = "append"
+        scd_type = scd_type or "1"
+
         if ingestion_type == "cdc":
             _create_cdc_table(
                 spark,
                 connection_name,
                 table,
                 primary_key,
-                cursor_field,
+                sequence_by,
+                scd_type,
                 view_name,
                 table_config,
             )
         elif ingestion_type == "snapshot":
             _create_snapshot_table(
-                spark, connection_name, table, primary_key, view_name, table_config
+                spark,
+                connection_name,
+                table,
+                primary_key,
+                scd_type,
+                view_name,
+                table_config,
             )
         elif ingestion_type == "append":
             _create_append_table(spark, connection_name, table, view_name, table_config)
