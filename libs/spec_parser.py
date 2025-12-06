@@ -30,14 +30,23 @@ class TableSpec(BaseModel):
     Currently only `table` objects are supported and they must include a
     `source_table` field.
 
+    Optional destination fields:
+    - destination_catalog: The catalog for the destination table
+    - destination_schema: The schema for the destination table
+    - destination_table: The name of the destination table
+
     The optional `table_configuration` is normalised so that:
     - it is always a mapping of string keys to string values
     - any nested structures (dicts / lists) are JSON-serialised
+
     """
 
     model_config = ConfigDict(extra="forbid")
 
     source_table: StrictStr
+    destination_catalog: Optional[StrictStr] = None
+    destination_schema: Optional[StrictStr] = None
+    destination_table: Optional[StrictStr] = None
     table_configuration: Optional[Dict[str, StrictStr]] = None
 
     @field_validator("table_configuration", mode="before")
@@ -263,3 +272,32 @@ class SpecParser:
                 config = obj.table.table_configuration or {}
                 return config.get(SEQUENCE_BY)
         return None
+
+    def get_full_destination_table_name(self, table_name: str) -> str:
+        """
+        Return the full destination table name for a specific table.
+
+        Args:
+            table_name: The name of the source table.
+
+        Returns:
+            The full destination table name in the format
+            'destination_catalog.destination_schema.destination_table',
+            or 'destination_catalog.destination_schema.table_name' if destination_table is not specified,
+            or table_name if destination_catalog or destination_schema is not specified.
+
+        Raises:
+            ValueError: If the table_name is not found in the object list.
+        """
+        for obj in self._model.objects:
+            if obj.table.source_table == table_name:
+                catalog = obj.table.destination_catalog
+                schema = obj.table.destination_schema
+                table = obj.table.destination_table or table_name
+
+                if catalog is None or schema is None:
+                    return table
+                else:
+                    return f"`{catalog}`.`{schema}`.`{table}`"
+
+        raise ValueError(f"Table '{table_name}' not found in the pipeline spec")

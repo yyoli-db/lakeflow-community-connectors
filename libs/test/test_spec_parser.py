@@ -235,3 +235,116 @@ def test_scd_type_invalid_value_raises_error(invalid_scd_type):
 
     with pytest.raises(ValueError, match="Invalid SCD type"):
         parser.get_scd_type("test_table")
+
+
+def test_get_full_destination_table_name_with_all_fields():
+    """Test full destination name when all destination fields are specified."""
+    spec = {
+        "connection_name": "test_conn",
+        "objects": [
+            {
+                "table": {
+                    "source_table": "source_table",
+                    "destination_catalog": "my_catalog",
+                    "destination_schema": "my_schema",
+                    "destination_table": "my_dest_table",
+                }
+            },
+        ],
+    }
+    parser = SpecParser(spec)
+    assert (
+        parser.get_full_destination_table_name("source_table")
+        == "`my_catalog`.`my_schema`.`my_dest_table`"
+    )
+
+
+def test_get_full_destination_table_name_without_destination_table():
+    """Test that source table name is used when destination_table is not specified."""
+    spec = {
+        "connection_name": "test_conn",
+        "objects": [
+            {
+                "table": {
+                    "source_table": "source_table",
+                    "destination_catalog": "my_catalog",
+                    "destination_schema": "my_schema",
+                }
+            },
+        ],
+    }
+    parser = SpecParser(spec)
+    assert (
+        parser.get_full_destination_table_name("source_table")
+        == "`my_catalog`.`my_schema`.`source_table`"
+    )
+
+
+def test_get_full_destination_table_name_without_catalog():
+    """Test that only table name is returned when catalog is missing."""
+    spec = {
+        "connection_name": "test_conn",
+        "objects": [
+            {
+                "table": {
+                    "source_table": "source_table",
+                    "destination_schema": "my_schema",
+                    "destination_table": "my_dest_table",
+                }
+            },
+        ],
+    }
+    parser = SpecParser(spec)
+    assert parser.get_full_destination_table_name("source_table") == "my_dest_table"
+
+
+def test_get_full_destination_table_name_without_schema():
+    """Test that only table name is returned when schema is missing."""
+    spec = {
+        "connection_name": "test_conn",
+        "objects": [
+            {
+                "table": {
+                    "source_table": "source_table",
+                    "destination_catalog": "my_catalog",
+                    "destination_table": "my_dest_table",
+                }
+            },
+        ],
+    }
+    parser = SpecParser(spec)
+    assert parser.get_full_destination_table_name("source_table") == "my_dest_table"
+
+
+def test_get_full_destination_table_name_no_destination_fields():
+    """Test that source table name is returned when no destination fields are specified."""
+    spec = {
+        "connection_name": "test_conn",
+        "objects": [
+            {
+                "table": {
+                    "source_table": "source_table",
+                }
+            },
+        ],
+    }
+    parser = SpecParser(spec)
+    assert parser.get_full_destination_table_name("source_table") == "source_table"
+
+
+def test_get_full_destination_table_name_unknown_table_raises_error():
+    """Test that ValueError is raised for unknown table."""
+    spec = {
+        "connection_name": "test_conn",
+        "objects": [
+            {
+                "table": {
+                    "source_table": "source_table",
+                }
+            },
+        ],
+    }
+    parser = SpecParser(spec)
+
+    with pytest.raises(ValueError, match="Table 'unknown_table' not found"):
+        parser.get_full_destination_table_name("unknown_table")
