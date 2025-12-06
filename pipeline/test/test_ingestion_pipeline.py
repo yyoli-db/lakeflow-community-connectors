@@ -89,7 +89,8 @@ class TestIngestCDC:
             mock_cdc.assert_called_once_with(
                 mock_spark,
                 "test_connection",
-                "users",
+                "users",  # source_table
+                "users",  # destination_table (defaults to source_table)
                 ["user_id"],  # primary_keys from metadata
                 "updated_at",  # sequence_by from metadata cursor_field
                 "1",  # default scd_type
@@ -119,8 +120,8 @@ class TestIngestCDC:
         ), patch("pipeline.ingestion_pipeline._create_cdc_table") as mock_cdc:
             ingest(mock_spark, spec)
 
-            # Verify SCD Type 2 is passed
-            assert mock_cdc.call_args[0][5] == "SCD_TYPE_2"
+            # Verify SCD Type 2 is passed (index 6 after adding destination_table)
+            assert mock_cdc.call_args[0][6] == "2"
 
     def test_cdc_ingestion_with_custom_sequence_by(self, mock_spark, base_metadata):
         """Test CDC ingestion with custom sequence_by from spec."""
@@ -144,8 +145,8 @@ class TestIngestCDC:
         ), patch("pipeline.ingestion_pipeline._create_cdc_table") as mock_cdc:
             ingest(mock_spark, spec)
 
-            # Verify custom sequence_by is used instead of cursor_field
-            assert mock_cdc.call_args[0][4] == "custom_timestamp"
+            # Verify custom sequence_by is used instead of cursor_field (index 5 after adding destination_table)
+            assert mock_cdc.call_args[0][5] == "custom_timestamp"
 
     def test_cdc_ingestion_with_table_config(self, mock_spark, base_metadata):
         """Test CDC ingestion with additional table configuration."""
@@ -170,8 +171,8 @@ class TestIngestCDC:
         ), patch("pipeline.ingestion_pipeline._create_cdc_table") as mock_cdc:
             ingest(mock_spark, spec)
 
-            # Verify table config is passed (excluding special keys)
-            table_config = mock_cdc.call_args[0][7]
+            # Verify table config is passed (excluding special keys) (index 8 after adding destination_table)
+            table_config = mock_cdc.call_args[0][8]
             assert table_config == {
                 "some_option": "value1",
                 "another_option": "value2",
@@ -205,7 +206,8 @@ class TestIngestSnapshot:
             mock_snapshot.assert_called_once_with(
                 mock_spark,
                 "test_connection",
-                "orders",
+                "orders",  # source_table
+                "orders",  # destination_table (defaults to source_table)
                 ["order_id"],  # primary_keys from metadata
                 "1",  # default scd_type
                 "orders_staging",  # view_name
@@ -234,8 +236,8 @@ class TestIngestSnapshot:
         ), patch("pipeline.ingestion_pipeline._create_snapshot_table") as mock_snapshot:
             ingest(mock_spark, spec)
 
-            # Verify SCD Type 2 is passed
-            assert mock_snapshot.call_args[0][4] == "SCD_TYPE_2"
+            # Verify SCD Type 2 is passed (index 5 after adding destination_table)
+            assert mock_snapshot.call_args[0][5] == "2"
 
 
 class TestIngestAppend:
@@ -265,7 +267,8 @@ class TestIngestAppend:
             mock_append.assert_called_once_with(
                 mock_spark,
                 "test_connection",
-                "events",
+                "events",  # source_table
+                "events",  # destination_table (defaults to source_table)
                 "events_staging",  # view_name
                 {},  # table_config
             )
@@ -296,7 +299,8 @@ class TestIngestAppend:
 
             # Verify append table was created (not CDC)
             mock_append.assert_called_once()
-            assert mock_append.call_args[0][2] == "users"
+            assert mock_append.call_args[0][2] == "users"  # source_table
+            assert mock_append.call_args[0][3] == "users"  # destination_table
 
 
 class TestIngestMultipleTables:
@@ -349,15 +353,18 @@ class TestIngestMultipleTables:
 
             # Verify CDC was called for users
             mock_cdc.assert_called_once()
-            assert mock_cdc.call_args[0][2] == "users"
+            assert mock_cdc.call_args[0][2] == "users"  # source_table
+            assert mock_cdc.call_args[0][3] == "users"  # destination_table
 
             # Verify snapshot was called for orders
             mock_snapshot.assert_called_once()
-            assert mock_snapshot.call_args[0][2] == "orders"
+            assert mock_snapshot.call_args[0][2] == "orders"  # source_table
+            assert mock_snapshot.call_args[0][3] == "orders"  # destination_table
 
             # Verify append was called for events
             mock_append.assert_called_once()
-            assert mock_append.call_args[0][2] == "events"
+            assert mock_append.call_args[0][2] == "events"  # source_table
+            assert mock_append.call_args[0][3] == "events"  # destination_table
 
     def test_multiple_tables_with_mixed_configurations(self, mock_spark, base_metadata):
         """Test multiple tables with different SCD types and configurations."""
@@ -394,14 +401,18 @@ class TestIngestMultipleTables:
 
             # Verify users table called with SCD_TYPE_2 and custom sequence_by
             users_call = mock_cdc.call_args
-            assert users_call[0][2] == "users"
-            assert users_call[0][4] == "created_at"  # custom sequence_by
-            assert users_call[0][5] == "SCD_TYPE_2"
+            assert users_call[0][2] == "users"  # source_table
+            assert users_call[0][3] == "users"  # destination_table
+            assert (
+                users_call[0][5] == "created_at"
+            )  # custom sequence_by (index shifted)
+            assert users_call[0][6] == "2"  # scd_type (index shifted)
 
             # Verify orders table called with SCD_TYPE_1
             orders_call = mock_snapshot.call_args
-            assert orders_call[0][2] == "orders"
-            assert orders_call[0][4] == "SCD_TYPE_1"
+            assert orders_call[0][2] == "orders"  # source_table
+            assert orders_call[0][3] == "orders"  # destination_table
+            assert orders_call[0][5] == "1"  # scd_type (index shifted)
 
 
 class TestIngestEdgeCases:
@@ -432,8 +443,8 @@ class TestIngestEdgeCases:
         ), patch("pipeline.ingestion_pipeline._create_cdc_table") as mock_cdc:
             ingest(mock_spark, spec)
 
-            # Verify table_config only contains regular options, not special keys
-            table_config = mock_cdc.call_args[0][7]
+            # Verify table_config only contains regular options, not special keys (index 8 after adding destination_table)
+            table_config = mock_cdc.call_args[0][8]
             assert table_config == {"regular_option": "value"}
             assert "scd_type" not in table_config
             assert "sequence_by" not in table_config
@@ -459,8 +470,10 @@ class TestIngestEdgeCases:
         ), patch("pipeline.ingestion_pipeline._create_cdc_table") as mock_cdc:
             ingest(mock_spark, spec)
 
-            # Verify sequence_by uses cursor_field from metadata
-            assert mock_cdc.call_args[0][4] == "updated_at"  # cursor_field from metadata
+            # Verify sequence_by uses cursor_field from metadata (index 5 after adding destination_table)
+            assert (
+                mock_cdc.call_args[0][5] == "updated_at"
+            )  # cursor_field from metadata
 
     def test_scd_type_fallback_to_default(self, mock_spark, base_metadata):
         """Test that scd_type falls back to '1' when not specified."""
@@ -482,8 +495,8 @@ class TestIngestEdgeCases:
         ), patch("pipeline.ingestion_pipeline._create_cdc_table") as mock_cdc:
             ingest(mock_spark, spec)
 
-            # Verify scd_type defaults to "1"
-            assert mock_cdc.call_args[0][5] == "1"
+            # Verify scd_type defaults to "1" (index 6 after adding destination_table)
+            assert mock_cdc.call_args[0][6] == "1"
 
 
 class TestMetadataOverride:
@@ -519,9 +532,9 @@ class TestMetadataOverride:
         ), patch("pipeline.ingestion_pipeline._create_cdc_table") as mock_cdc:
             ingest(mock_spark, spec)
 
-            # Verify primary_keys from spec is used
+            # Verify primary_keys from spec is used (index 4 after adding destination_table)
             mock_cdc.assert_called_once()
-            assert mock_cdc.call_args[0][3] == ["user_id", "tenant_id"]
+            assert mock_cdc.call_args[0][4] == ["user_id", "tenant_id"]
 
     def test_spec_overrides_metadata_primary_keys(self, mock_spark, base_metadata):
         """Test that spec primary_keys overrides metadata primary_keys."""
@@ -545,9 +558,9 @@ class TestMetadataOverride:
         ), patch("pipeline.ingestion_pipeline._create_cdc_table") as mock_cdc:
             ingest(mock_spark, spec)
 
-            # Verify spec primary_keys overrides metadata
+            # Verify spec primary_keys overrides metadata (index 4 after adding destination_table)
             mock_cdc.assert_called_once()
-            assert mock_cdc.call_args[0][3] == ["composite_key_1", "composite_key_2"]
+            assert mock_cdc.call_args[0][4] == ["composite_key_1", "composite_key_2"]
 
     def test_metadata_missing_all_optional_fields(self, mock_spark):
         """Test ingestion when metadata has no optional fields, spec provides all."""
@@ -578,12 +591,12 @@ class TestMetadataOverride:
         ), patch("pipeline.ingestion_pipeline._create_cdc_table") as mock_cdc:
             ingest(mock_spark, spec)
 
-            # Verify all values from spec are used
+            # Verify all values from spec are used (indices shifted after adding destination_table)
             mock_cdc.assert_called_once()
             call_args = mock_cdc.call_args[0]
-            assert call_args[3] == ["id"]  # primary_keys
-            assert call_args[4] == "created_at"  # sequence_by
-            assert call_args[5] == "SCD_TYPE_2"  # scd_type
+            assert call_args[4] == ["id"]  # primary_keys
+            assert call_args[5] == "created_at"  # sequence_by
+            assert call_args[6] == "2"  # scd_type
 
     def test_metadata_missing_ingestion_type_defaults_to_cdc(self, mock_spark):
         """Test that missing ingestion_type in metadata defaults to 'cdc'."""
@@ -615,3 +628,95 @@ class TestMetadataOverride:
 
             # Verify CDC table was created (default ingestion_type)
             mock_cdc.assert_called_once()
+
+
+class TestDestinationTable:
+    """Test destination table name scenarios."""
+
+    def test_destination_table_with_full_path(self, mock_spark, base_metadata):
+        """Test that destination table uses fully qualified name when all fields are specified."""
+        spec = {
+            "connection_name": "test_connection",
+            "objects": [
+                {
+                    "table": {
+                        "source_table": "users",
+                        "destination_catalog": "my_catalog",
+                        "destination_schema": "my_schema",
+                        "destination_table": "my_users",
+                        "table_configuration": {},
+                    }
+                }
+            ],
+        }
+
+        with patch(
+            "pipeline.ingestion_pipeline._get_table_metadata",
+            return_value=base_metadata,
+        ), patch("pipeline.ingestion_pipeline._create_cdc_table") as mock_cdc:
+            ingest(mock_spark, spec)
+
+            # Verify destination_table has the full qualified name
+            mock_cdc.assert_called_once()
+            assert mock_cdc.call_args[0][2] == "users"  # source_table
+            assert (
+                mock_cdc.call_args[0][3] == "`my_catalog`.`my_schema`.`my_users`"
+            )  # destination_table
+
+    def test_destination_table_defaults_to_source_table(
+        self, mock_spark, base_metadata
+    ):
+        """Test that destination table defaults to source table name when not specified."""
+        spec = {
+            "connection_name": "test_connection",
+            "objects": [
+                {
+                    "table": {
+                        "source_table": "users",
+                        "table_configuration": {},
+                    }
+                }
+            ],
+        }
+
+        with patch(
+            "pipeline.ingestion_pipeline._get_table_metadata",
+            return_value=base_metadata,
+        ), patch("pipeline.ingestion_pipeline._create_cdc_table") as mock_cdc:
+            ingest(mock_spark, spec)
+
+            # Verify destination_table defaults to source_table name
+            mock_cdc.assert_called_once()
+            assert mock_cdc.call_args[0][2] == "users"  # source_table
+            assert mock_cdc.call_args[0][3] == "users"  # destination_table
+
+    def test_destination_table_uses_source_name_when_only_catalog_schema(
+        self, mock_spark, base_metadata
+    ):
+        """Test that destination uses source table name when destination_table is not specified."""
+        spec = {
+            "connection_name": "test_connection",
+            "objects": [
+                {
+                    "table": {
+                        "source_table": "users",
+                        "destination_catalog": "my_catalog",
+                        "destination_schema": "my_schema",
+                        "table_configuration": {},
+                    }
+                }
+            ],
+        }
+
+        with patch(
+            "pipeline.ingestion_pipeline._get_table_metadata",
+            return_value=base_metadata,
+        ), patch("pipeline.ingestion_pipeline._create_cdc_table") as mock_cdc:
+            ingest(mock_spark, spec)
+
+            # Verify destination_table uses source table name with catalog.schema prefix
+            mock_cdc.assert_called_once()
+            assert mock_cdc.call_args[0][2] == "users"  # source_table
+            assert (
+                mock_cdc.call_args[0][3] == "`my_catalog`.`my_schema`.`users`"
+            )  # destination_table

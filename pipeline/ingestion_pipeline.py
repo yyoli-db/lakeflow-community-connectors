@@ -7,7 +7,8 @@ from libs.spec_parser import SpecParser
 def _create_cdc_table(
     spark,
     connection_name: str,
-    table: str,
+    source_table: str,
+    destination_table: str,
     primary_keys: List[str],
     sequence_by: str,
     scd_type: str,
@@ -21,14 +22,14 @@ def _create_cdc_table(
         return (
             spark.readStream.format("lakeflow_connect")
             .option("databricks.connection", connection_name)
-            .option("tableName", table)
+            .option("tableName", source_table)
             .options(**table_config)
             .load()
         )
 
-    sdp.create_streaming_table(name=table)
+    sdp.create_streaming_table(name=destination_table)
     sdp.apply_changes(
-        target=table,
+        target=destination_table,
         source=view_name,
         keys=primary_keys,
         sequence_by=col(sequence_by),
@@ -39,7 +40,8 @@ def _create_cdc_table(
 def _create_snapshot_table(
     spark,
     connection_name: str,
-    table: str,
+    source_table: str,
+    destination_table: str,
     primary_keys: List[str],
     scd_type: str,
     view_name: str,
@@ -52,14 +54,14 @@ def _create_snapshot_table(
         return (
             spark.read.format("lakeflow_connect")
             .option("databricks.connection", connection_name)
-            .option("tableName", table)
+            .option("tableName", source_table)
             .options(**table_config)
             .load()
         )
 
-    sdp.create_streaming_table(name=table)
+    sdp.create_streaming_table(name=destination_table)
     sdp.apply_changes_from_snapshot(
-        target=table,
+        target=destination_table,
         source=view_name,
         keys=primary_keys,
         stored_as_scd_type=scd_type,
@@ -69,20 +71,21 @@ def _create_snapshot_table(
 def _create_append_table(
     spark,
     connection_name: str,
-    table: str,
+    source_table: str,
+    destination_table: str,
     view_name: str,
     table_config: dict[str, str],
 ) -> None:
     """Create append table using streaming without apply_changes"""
 
-    sdp.create_streaming_table(name=table)
+    sdp.create_streaming_table(name=destination_table)
 
-    @sdp.append_flow(name=view_name, target=table)
+    @sdp.append_flow(name=view_name, target=destination_table)
     def af():
         return (
             spark.readStream.format("lakeflow_connect")
             .option("databricks.connection", connection_name)
-            .option("tableName", table)
+            .option("tableName", source_table)
             .options(**table_config)
             .load()
         )
@@ -127,6 +130,7 @@ def ingest(spark, pipeline_spec: dict) -> None:
         ingestion_type = metadata[table].get("ingestion_type", "cdc")
         view_name = table + "_staging"
         table_config = spec.get_table_configuration(table)
+        destination_table = spec.get_full_destination_table_name(table)
 
         # Override parameters with spec values if available
         primary_keys = spec.get_primary_keys(table) or primary_keys
@@ -141,6 +145,7 @@ def ingest(spark, pipeline_spec: dict) -> None:
                 spark,
                 connection_name,
                 table,
+                destination_table,
                 primary_keys,
                 sequence_by,
                 scd_type,
@@ -152,13 +157,21 @@ def ingest(spark, pipeline_spec: dict) -> None:
                 spark,
                 connection_name,
                 table,
+                destination_table,
                 primary_keys,
                 scd_type,
                 view_name,
                 table_config,
             )
         elif ingestion_type == "append":
-            _create_append_table(spark, connection_name, table, view_name, table_config)
+            _create_append_table(
+                spark,
+                connection_name,
+                table,
+                destination_table,
+                view_name,
+                table_config,
+            )
 
     for table_name in table_list:
         _ingest_table(table_name)
