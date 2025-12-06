@@ -13,7 +13,10 @@ This documentation provides setup instructions and reference information for the
 
 To configure the connector, provide the following parameters in your connector options:
 <List the parameters with name, type, whether required, description, and example in a table>
-<If any extra table-specific options that can be configured. List these option name as a comma-separated string value in the `externalOptionsAllowList`. If there are not any, the connection do not need this option.>
+<If this connector supports any extra table-specific options (such as options that must be set per table when reading data), list every allowed option name here as a comma-separated string. 
+Document these in the `externalOptionsAllowList` connection option. 
+If there are such table-specific options, clearly state that `externalOptionsAllowList` is a required connection option, and provide the full, definitive list of all supported options — do not mark this option as optional or provide a sample value.
+If no extra table-specific options are supported, make it clear that `externalOptionsAllowList` does not need to be included as a connection parameter.>
 
 ### <Add a section describing how to obtain the required parameters>
 
