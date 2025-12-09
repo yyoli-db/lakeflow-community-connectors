@@ -31,6 +31,7 @@ The connection can also be created using the standard Unity Catalog API.
 
 ## Supported Objects
 <Describe which objects are supported by this connector.>
+<When listing supported object names, specify them using the exact casing required by the implementation.>
 <If only a static list of objects is supported, list all of them. Otherwise, describe the supported objects by category or provide a general description>
 <Describe the primary key columns of each object, if available>
 <Describe the incremental ingestion strategy and cursor field for objects that support incremental reads>

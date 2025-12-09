@@ -83,6 +83,7 @@ Implement the Python connector for **{{source_name}}** that conforms exactly to 
 
 ### Implementation Requirements 
 - Implement all methods declared in the interface.
+- At the beginning of each function, check if the provided `table_name` exists in the list of supported tables. If it does not, raise an explicit exception to inform the user that the table is not supported.
 - When returning the schema in the `get_table_schema` function, prefer using StructType over MapType to enforce explicit typing of sub-columns.
 - Avoid flattening nested fields when parsing JSON data.
 - Prefer using `LongType` over `IntegerType`
