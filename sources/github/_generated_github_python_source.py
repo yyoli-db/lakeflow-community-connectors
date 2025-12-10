@@ -758,7 +758,7 @@ def register_lakeflow_source(spark):
             repo = table_options.get("repo")
             if not owner or not repo:
                 raise ValueError(
-                    "table_options for 'issues' must include non-empty 'owner' and 'repo'"
+                    "table_configuration for 'issues' must include non-empty 'owner' and 'repo'"
                 )
 
             state = table_options.get("state", "all")
@@ -891,12 +891,12 @@ def register_lakeflow_source(spark):
 
             if owner and org:
                 raise ValueError(
-                    "table_options for 'repositories' must not include both 'owner' and 'org'; "
+                    "table_configuration for 'repositories' must not include both 'owner' and 'org'; "
                     "specify only one."
                 )
             if not owner and not org:
                 raise ValueError(
-                    "table_options for 'repositories' must include either 'owner' (username) "
+                    "table_configuration for 'repositories' must include either 'owner' (username) "
                     "or 'org' (organization login)"
                 )
 
@@ -969,7 +969,7 @@ def register_lakeflow_source(spark):
             repo = table_options.get("repo")
             if not owner or not repo:
                 raise ValueError(
-                    "table_options for 'pull_requests' must include non-empty 'owner' and 'repo'"
+                    "table_configuration for 'pull_requests' must include non-empty 'owner' and 'repo'"
                 )
 
             state = table_options.get("state", "all")
@@ -1073,7 +1073,7 @@ def register_lakeflow_source(spark):
             repo = table_options.get("repo")
             if not owner or not repo:
                 raise ValueError(
-                    "table_options for 'comments' must include non-empty 'owner' and 'repo'"
+                    "table_configuration for 'comments' must include non-empty 'owner' and 'repo'"
                 )
 
             try:
@@ -1174,7 +1174,7 @@ def register_lakeflow_source(spark):
             repo = table_options.get("repo")
             if not owner or not repo:
                 raise ValueError(
-                    "table_options for 'commits' must include non-empty 'owner' and 'repo'"
+                    "table_configuration for 'commits' must include non-empty 'owner' and 'repo'"
                 )
 
             try:
@@ -1282,7 +1282,7 @@ def register_lakeflow_source(spark):
             repo = table_options.get("repo")
             if not owner or not repo:
                 raise ValueError(
-                    "table_options for 'assignees' must include non-empty 'owner' and 'repo'"
+                    "table_configuration for 'assignees' must include non-empty 'owner' and 'repo'"
                 )
 
             try:
@@ -1351,7 +1351,7 @@ def register_lakeflow_source(spark):
             repo = table_options.get("repo")
             if not owner or not repo:
                 raise ValueError(
-                    "table_options for 'branches' must include non-empty 'owner' and 'repo'"
+                    "table_configuration for 'branches' must include non-empty 'owner' and 'repo'"
                 )
 
             try:
@@ -1419,7 +1419,7 @@ def register_lakeflow_source(spark):
             repo = table_options.get("repo")
             if not owner or not repo:
                 raise ValueError(
-                    "table_options for 'collaborators' must include non-empty 'owner' and 'repo'"
+                    "table_configuration for 'collaborators' must include non-empty 'owner' and 'repo'"
                 )
 
             try:
@@ -1698,7 +1698,7 @@ def register_lakeflow_source(spark):
             repo = table_options.get("repo")
             if not owner or not repo:
                 raise ValueError(
-                    "table_options for 'reviews' must include non-empty 'owner' and 'repo'"
+                    "table_configuration for 'reviews' must include non-empty 'owner' and 'repo'"
                 )
 
             # Page size and safety limits for listing parent pull requests and
