@@ -1050,6 +1050,10 @@ def register_lakeflow_source(spark):
             Returns:
                 StructType representing the table schema
             """
+            if table_name not in self._schema_config:
+                raise ValueError(
+                    f"Unsupported table: {table_name}. Supported tables are: {self.list_tables()}"
+                )
             schema = self._schema_config[table_name]
             return schema
 
@@ -1065,6 +1069,10 @@ def register_lakeflow_source(spark):
             Returns:
                 Dictionary with primary_keys, cursor_field, and ingestion_type
             """
+            if table_name not in self._object_config:
+                raise ValueError(
+                    f"Unsupported table: {table_name}. Supported tables are: {self.list_tables()}"
+                )
             config = self._object_config[table_name]
             return {
                 "primary_keys": config["primary_keys"],

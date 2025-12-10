@@ -325,6 +325,10 @@ def register_lakeflow_source(spark):
             Returns:
                 A StructType object representing the schema of the table.
             """
+            supported_tables = self.list_tables()
+            if table_name not in supported_tables:
+                raise ValueError(f"Unsupported table: {table_name}. Supported tables are: {supported_tables}")
+
             # Check cache first
             if table_name in self._schema_cache:
                 return self._schema_cache[table_name]
@@ -355,6 +359,10 @@ def register_lakeflow_source(spark):
                         - "cdc": capture incremental changes
                         - "append": incremental append
             """
+            supported_tables = self.list_tables()
+            if table_name not in supported_tables:
+                raise ValueError(f"Unsupported table: {table_name}. Supported tables are: {supported_tables}")
+
             # Check cache first
             if table_name in self._metadata_cache:
                 return self._metadata_cache[table_name]
@@ -495,6 +503,10 @@ def register_lakeflow_source(spark):
             Returns:
                 Tuple of (records, new_offset)
             """
+            supported_tables = self.list_tables()
+            if table_name not in supported_tables:
+                raise ValueError(f"Unsupported table: {table_name}. Supported tables are: {supported_tables}")
+
             # Determine if this is an incremental read
             is_incremental = (
                 start_offset is not None and start_offset.get("updatedAt") is not None

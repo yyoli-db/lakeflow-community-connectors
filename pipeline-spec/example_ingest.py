@@ -18,8 +18,8 @@ source_name = "<YOUR_SOURCE_NAME>"  # e.g., "github", "salesforce"
 #         ├── destination_schema (optional): Target schema (defaults to pipeline's default)
 #         ├── destination_table (optional): Target table name (defaults to source_table)
 #         └── table_configuration (optional)
-#             ├── scd_type: "SCD_TYPE_1" (default), "SCD_TYPE_2", or "APPEND_ONLY"
-#             ├── primary_keys: List of columns to override connector's default keys
+#             ├── scd_type (optional): "SCD_TYPE_1" (default), "SCD_TYPE_2", or "APPEND_ONLY"
+#             ├── primary_keys (optional): List of columns to override connector's default keys
 #             └── (other options): See source connector's README
 # =============================================================================
 
