@@ -3,6 +3,9 @@
     "allow": [
       "Read(.claude/skills/**)",
       "Read(.claude/agents/**)",
+      "Read(.claude/connector-state/**)",
+      "Write(.claude/connector-state/**)",
+      "Bash(rm .claude/connector-state/*)",
       "Read(src/**)",
       "Write(src/databricks/labs/community_connector/sources/**)",
       "Edit(src/databricks/labs/community_connector/sources/**)",
